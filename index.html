@@ -304,6 +304,15 @@
   </div>
 </dialog>
 
+<dialog class="dialogo" id="dlg-google" aria-labelledby="dlg-google-titulo">
+  <p class="dlg-titulo" id="dlg-google-titulo">Continuar con Google</p>
+  <p class="dlg-texto">Tu navegador necesita un toque más para abrir la ventana de inicio de sesión.</p>
+  <div class="dlg-opciones">
+    <button type="button" class="btn" id="dlg-google-no">Cancelar</button>
+    <button type="button" class="btn btn-primario" id="dlg-google-si">Continuar con Google</button>
+  </div>
+</dialog>
+
 <main class="contenedor">
   <p id="aviso-guardado" class="alerta" hidden>No se pudo guardar en este navegador (¿modo privado?). Usa “Exportar” para no perder tus datos.</p>
 
@@ -926,7 +935,7 @@
     t.classList.toggle('error', !!error);
     t.classList.add('visible');
     clearTimeout(tToast);
-    tToast = setTimeout(function () { t.classList.remove('visible'); }, 2600);
+    tToast = setTimeout(function () { t.classList.remove('visible'); }, error ? 7000 : 2600);
   }
 
   /* ---------- Acciones ---------- */
@@ -1142,6 +1151,14 @@
     });
   };
 
+  // Si el navegador bloqueó la ventana de Google, un segundo toque la abre sin problema
+  App.pedirToque = function (accion) {
+    var dlg = $('#dlg-google');
+    $('#dlg-google-si').onclick = function () { dlg.close(); accion(); };
+    $('#dlg-google-no').onclick = function () { dlg.close(); };
+    dlg.showModal();
+  };
+
   $('#btn-entrar').addEventListener('click', function () { if (App.onEntrar) App.onEntrar(); });
   $('#btn-salir').addEventListener('click', function () { if (App.onSalir) App.onSalir(); });
 
@@ -1190,6 +1207,10 @@ function escribirMeta(m) {
   const app = A.initializeApp(CONFIG);
   const auth = Au.getAuth(app);
   const db = F.getFirestore(app);
+
+  // Prepara desde ya el canal con la ventana de Google. En iPhone (Safari) la ventana solo se
+  // permite si se abre justo al tocar el botón; si hubiera que prepararla en ese momento, se bloquea.
+  Au.getRedirectResult(auth).catch(() => {});
 
   // meta = { uid, rev, pendiente }: rev es la versión de la nube que este dispositivo conoce
   let meta = leerMeta();
@@ -1266,19 +1287,23 @@ function escribirMeta(m) {
     aplicarRemoto(r);
   }
 
-  ui.onEntrar = async function () {
+  // Solo ventana emergente: el inicio por redirección no funciona en Safari/iPhone
+  // cuando la página (github.io) y Firebase (firebaseapp.com) están en dominios distintos.
+  async function entrar(esReintento) {
     const proveedor = new Au.GoogleAuthProvider();
     proveedor.setCustomParameters({ prompt: 'select_account' });
     try {
-      await Au.signInWithPopup(auth, proveedor);
+      await Au.signInWithPopup(auth, proveedor); // debe llamarse sin esperas previas
     } catch (e) {
-      if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
-        await Au.signInWithRedirect(auth, proveedor);
-      } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+      if (e.code === 'auth/popup-blocked') {
+        if (!esReintento) ui.pedirToque(() => entrar(true));
+        else ui.toast('El navegador bloqueó la ventana de Google. Permite las ventanas emergentes para esta página e inténtalo otra vez.', true);
+      } else if (!['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/user-cancelled'].includes(e.code)) {
         ui.toast('No se pudo iniciar sesión (' + e.code + ')', true);
       }
     }
-  };
+  }
+  ui.onEntrar = () => entrar(false);
 
   ui.onSalir = async function () {
     if (temporizador) await subirAhora();
