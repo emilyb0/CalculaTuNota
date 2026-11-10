@@ -221,11 +221,34 @@
   .toast.visible { opacity: 1; transform: translate(-50%, 0); }
   .toast.error { background: var(--bad); color: #fff; }
 
+  /* ---------- Cuenta y sincronización ---------- */
+  .marca { margin-right: auto; }
+  .acciones { order: 1; }
+  .cuenta { order: 2; }
+  .sesion { display: flex; align-items: center; gap: 10px; }
+  .sync-estado { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .sync-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+  .sync-estado[data-estado="ok"]::before { background: var(--ok); }
+  .sync-estado[data-estado="guardando"]::before,
+  .sync-estado[data-estado="sincronizando"]::before { background: var(--warn); }
+  .sync-estado[data-estado="error"]::before { background: var(--bad); }
+
+  .dialogo {
+    width: calc(100% - 32px); max-width: 420px; padding: 22px;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface); color: var(--ink);
+  }
+  .dialogo::backdrop { background: rgba(7, 19, 39, .5); }
+  .dlg-titulo { font-size: 1.05rem; font-weight: 800; margin-bottom: 8px; }
+  .dlg-texto { font-size: .9rem; color: var(--muted); margin-bottom: 20px; }
+  .dlg-opciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
   @media (max-width: 600px) {
     body { font-size: 14.5px; }
     .barra { margin-bottom: 24px; }
     .barra-in { padding-top: 14px; padding-bottom: 14px; }
-    .acciones { width: 100%; }
+    .cuenta { order: 1; }
+    .acciones { order: 2; width: 100%; }
     .acciones .btn { flex: 1; justify-content: center; }
     main { gap: 32px; }
     .resumen { padding: 18px 16px 14px; }
@@ -260,8 +283,26 @@
       </button>
       <input type="file" id="archivo" accept="application/json,.json" hidden>
     </div>
+    <div class="cuenta" id="cuenta" hidden>
+      <button type="button" class="btn btn-primario" id="btn-entrar" title="Inicia sesión con Google para ver tus datos en todos tus dispositivos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4.5 4.5 0 01-.6-8.96A6 6 0 0118 8.5a4 4 0 01-.5 9.5H7z"/></svg>Sincronizar
+      </button>
+      <div class="sesion" id="sesion" hidden>
+        <span class="sync-estado" id="sync-estado" role="status"></span>
+        <button type="button" class="btn" id="btn-salir">Salir</button>
+      </div>
+    </div>
   </div>
 </header>
+
+<dialog class="dialogo" id="dlg-conflicto" aria-labelledby="dlg-titulo">
+  <p class="dlg-titulo" id="dlg-titulo">¿Qué datos quieres conservar?</p>
+  <p class="dlg-texto" id="dlg-texto"></p>
+  <div class="dlg-opciones">
+    <button type="button" class="btn" id="dlg-local">Los de este dispositivo</button>
+    <button type="button" class="btn btn-primario" id="dlg-nube">Los de la nube</button>
+  </div>
+</dialog>
 
 <main class="contenedor">
   <p id="aviso-guardado" class="alerta" hidden>No se pudo guardar en este navegador (¿modo privado?). Usa “Exportar” para no perder tus datos.</p>
@@ -309,14 +350,14 @@
     </div>
     <div id="vacio" class="vacio">
       <p class="vacio-titulo">Aún no tienes materias</p>
-      <p>Agrega cada materia con sus evaluaciones y porcentajes. Todo se calcula mientras escribes y se guarda solo en este navegador.</p>
+      <p>Agrega cada materia con sus evaluaciones y porcentajes. Todo se calcula y se guarda mientras escribes.</p>
       <button type="button" class="btn" id="btn-ejemplo">Ver un ejemplo</button>
     </div>
     <div id="materias" class="materias"></div>
   </section>
 </main>
 
-<footer class="pie">Tus datos se guardan solo en este navegador. Usa “Exportar” para tener un respaldo o pasarlos a otro dispositivo.</footer>
+<footer class="pie">Tus datos se guardan en este navegador. Con “Sincronizar” (cuenta de Google) los ves en todos tus dispositivos.</footer>
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
@@ -507,6 +548,7 @@
 (function () {
   'use strict';
   var N = window.Nota;
+  var App = window.App = {}; // puente con el módulo de sincronización
   var CLAVE = 'calculatunota.v1';
   var $ = function (s, r) { return (r || document).querySelector(s); };
 
@@ -529,11 +571,18 @@
   function normalizar(d) {
     if (Array.isArray(d)) d = { materias: d };
     if (!d || typeof d !== 'object' || !Array.isArray(d.materias)) return null;
+    // Conserva los ids (sirven para no perder el cursor al sincronizar) si son válidos y únicos
+    var usados = {};
+    function idDe(v) {
+      var id = typeof v === 'string' && /^[\w-]{1,40}$/.test(v) && !usados[v] ? v : uid();
+      usados[id] = true;
+      return id;
+    }
     return {
       creditosSemestre: texto(d.creditosSemestre, 6),
       materias: d.materias.filter(function (m) { return m && typeof m === 'object'; }).map(function (m) {
         return {
-          id: uid(),
+          id: idDe(m.id),
           nombre: texto(m.nombre, 60) || 'Materia',
           creditos: texto(m.creditos, 6),
           meta: m.meta === undefined || m.meta === null ? '3.00' : texto(m.meta, 6),
@@ -542,7 +591,7 @@
           evaluaciones: (Array.isArray(m.evaluaciones) ? m.evaluaciones : [])
             .filter(function (e) { return e && typeof e === 'object'; })
             .map(function (e) {
-              return { id: uid(), nombre: texto(e.nombre, 60), porcentaje: texto(e.porcentaje, 8), nota: texto(e.nota, 6) };
+              return { id: idDe(e.id), nombre: texto(e.nombre, 60), porcentaje: texto(e.porcentaje, 8), nota: texto(e.nota, 6) };
             })
         };
       })
@@ -564,17 +613,24 @@
       creditosSemestre: datos.creditosSemestre,
       materias: datos.materias.map(function (m) {
         return {
-          nombre: m.nombre, creditos: m.creditos, meta: m.meta, simulacion: m.simulacion, abierta: m.abierta,
-          evaluaciones: m.evaluaciones.map(function (e) { return { nombre: e.nombre, porcentaje: e.porcentaje, nota: e.nota }; })
+          id: m.id, nombre: m.nombre, creditos: m.creditos, meta: m.meta, simulacion: m.simulacion, abierta: m.abierta,
+          evaluaciones: m.evaluaciones.map(function (e) { return { id: e.id, nombre: e.nombre, porcentaje: e.porcentaje, nota: e.nota }; })
         };
       })
     };
   }
 
-  function guardar() {
+  /** Guarda solo en este navegador. */
+  function guardarLocal() {
     var ok = true;
     try { localStorage.setItem(CLAVE, JSON.stringify(serializar())); } catch (e) { ok = false; }
     $('#aviso-guardado').hidden = ok;
+  }
+
+  /** Guarda en este navegador y avisa a la sincronización (si hay sesión iniciada). */
+  function guardar() {
+    guardarLocal();
+    if (typeof App.alCambiar === 'function') App.alCambiar();
   }
 
   var datos = cargar();
@@ -1018,7 +1074,238 @@
     lector.readAsText(archivo);
   });
 
+  /* ---------- Puente con la sincronización (Firebase) ---------- */
+  function capturarFoco() {
+    var el = document.activeElement;
+    if (!el || !el.dataset || (!el.dataset.campo && el.id !== 'creditos-inscritos')) return null;
+    var art = el.closest('.materia'), fila = el.closest('.ev-fila');
+    return {
+      id: el.id, campo: el.dataset.campo,
+      materia: art && art.dataset.id, ev: fila && fila.dataset.ev,
+      inicio: el.selectionStart, fin: el.selectionEnd
+    };
+  }
+  function restaurarFoco(f) {
+    if (!f) return;
+    var el;
+    if (f.id === 'creditos-inscritos') el = $('#creditos-inscritos');
+    else {
+      var art = f.materia && lista.querySelector('.materia[data-id="' + f.materia + '"]');
+      if (art) el = (f.ev ? art.querySelector('[data-ev="' + f.ev + '"]') || art : art).querySelector('[data-campo="' + f.campo + '"]');
+    }
+    if (!el) return;
+    el.focus();
+    try { el.setSelectionRange(f.inicio, f.fin); } catch (e) { /* algunos campos no lo permiten */ }
+  }
+
+  function cuantas(d) { var n = d && d.materias ? d.materias.length : 0; return n + (n === 1 ? ' materia' : ' materias'); }
+
+  App.obtener = serializar;
+  App.hayDatos = function () { return datos.materias.length > 0 || !!datos.creditosSemestre; };
+  App.aplicar = function (d) {
+    var n = normalizar(d);
+    if (!n) return false;
+    var foco = capturarFoco();
+    datos = n;
+    guardarLocal();
+    renderTodo();
+    restaurarFoco(foco);
+    return true;
+  };
+  App.toast = toast;
+
+  App.mostrarCuenta = function (s) {
+    var cuenta = $('#cuenta');
+    cuenta.hidden = false;
+    var fuera = s.estado === 'fuera';
+    $('#btn-entrar').hidden = !fuera;
+    $('#sesion').hidden = fuera;
+    if (fuera) return;
+    var textos = { ok: 'Sincronizado', guardando: 'Guardando…', sincronizando: 'Sincronizando…', error: 'Sin conexión' };
+    var est = $('#sync-estado');
+    est.dataset.estado = s.estado;
+    est.textContent = textos[s.estado] || '';
+    if (s.email) $('#btn-salir').title = 'Sesión: ' + s.email;
+  };
+
+  App.preguntarConflicto = function (nube, fechaNube) {
+    return new Promise(function (resolver) {
+      var dlg = $('#dlg-conflicto');
+      $('#dlg-texto').textContent =
+        'Tu cuenta ya tiene datos guardados (' + cuantas(nube) + ', actualizados el ' + fechaNube + ') ' +
+        'y este dispositivo tiene otros (' + cuantas(serializar()) + '). Los que no elijas se reemplazan.';
+      function elegir(v) { dlg.close(); resolver(v); }
+      $('#dlg-nube').onclick = function () { elegir('nube'); };
+      $('#dlg-local').onclick = function () { elegir('local'); };
+      dlg.oncancel = function (ev) { ev.preventDefault(); }; // hay que elegir una opción
+      dlg.showModal();
+    });
+  };
+
+  $('#btn-entrar').addEventListener('click', function () { if (App.onEntrar) App.onEntrar(); });
+  $('#btn-salir').addEventListener('click', function () { if (App.onSalir) App.onSalir(); });
+
   renderTodo();
+})();
+</script>
+
+<!-- =====================================================================
+     SINCRONIZACIÓN ENTRE DISPOSITIVOS (Firebase: Google + Firestore)
+     Si Firebase no carga (sin internet), la app sigue funcionando solo en este navegador.
+     ===================================================================== -->
+<script type="module">
+const CONFIG = {
+  apiKey: "AIzaSyCy_Ayg9Aquz4Y7pqXz1H7_F_E5SzIE74Q",
+  authDomain: "calculatunota.firebaseapp.com",
+  projectId: "calculatunota",
+  storageBucket: "calculatunota.firebasestorage.app",
+  messagingSenderId: "905693305441",
+  appId: "1:905693305441:web:ee92da64c5e83f91746820"
+};
+const VERSION = '10.14.1';
+const CLAVE_META = 'calculatunota.sync';
+const SESION = Math.random().toString(36).slice(2) + Date.now().toString(36); // identifica esta pestaña
+const ui = window.App;
+
+function leerMeta() {
+  try { return JSON.parse(localStorage.getItem(CLAVE_META)) || {}; } catch (e) { return {}; }
+}
+function escribirMeta(m) {
+  try { localStorage.setItem(CLAVE_META, JSON.stringify(m)); } catch (e) { /* sin almacenamiento */ }
+}
+
+(async function () {
+  const base = 'https://www.gstatic.com/firebasejs/' + VERSION + '/';
+  let A, Au, F;
+  try {
+    [A, Au, F] = await Promise.all([
+      import(base + 'firebase-app.js'),
+      import(base + 'firebase-auth.js'),
+      import(base + 'firebase-firestore.js')
+    ]);
+  } catch (e) {
+    return; // sin internet o bloqueado: la app sigue funcionando localmente
+  }
+
+  const app = A.initializeApp(CONFIG);
+  const auth = Au.getAuth(app);
+  const db = F.getFirestore(app);
+
+  // meta = { uid, rev, pendiente }: rev es la versión de la nube que este dispositivo conoce
+  let meta = leerMeta();
+  let usuario = null, ref = null, desuscribir = null, temporizador = null, cambios = 0;
+
+  const estado = (e) => ui.mostrarCuenta({ estado: e, email: usuario && usuario.email });
+
+  async function subirAhora() {
+    clearTimeout(temporizador);
+    temporizador = null;
+    if (!usuario || !ref) return;
+    const marca = cambios, rev = Date.now(), uid = usuario.uid;
+    estado('guardando');
+    try {
+      await F.setDoc(ref, { datos: ui.obtener(), rev: rev, sesion: SESION, actualizado: F.serverTimestamp() });
+      meta = { uid: uid, rev: rev, pendiente: cambios !== marca };
+      escribirMeta(meta);
+      estado(meta.pendiente ? 'guardando' : 'ok');
+    } catch (e) {
+      estado('error');
+    }
+  }
+
+  function programarSubida() {
+    clearTimeout(temporizador);
+    temporizador = setTimeout(subirAhora, 1200);
+  }
+
+  function aplicarRemoto(r) {
+    ui.aplicar(r.datos);
+    meta = { uid: usuario.uid, rev: r.rev, pendiente: false };
+    escribirMeta(meta);
+    estado('ok');
+  }
+
+  // Cada cambio local: se marca como pendiente y se sube a la nube poco después
+  ui.alCambiar = function () {
+    cambios++;
+    meta.pendiente = true;
+    escribirMeta(meta);
+    if (usuario) { estado('guardando'); programarSubida(); }
+  };
+
+  async function conciliar(snap) {
+    const uid = usuario.uid;
+    const local = ui.obtener();
+    if (!snap.exists()) {
+      if (ui.hayDatos()) await subirAhora();
+      else { meta = { uid: uid, rev: 0, pendiente: false }; escribirMeta(meta); estado('ok'); }
+      return;
+    }
+    const r = snap.data();
+    if (JSON.stringify(r.datos) === JSON.stringify(local)) {
+      meta = { uid: uid, rev: r.rev, pendiente: false }; escribirMeta(meta); estado('ok');
+      return;
+    }
+    const mismoUsuario = meta.uid === uid;
+    // Este dispositivo no tiene cambios propios: se toma lo de la nube
+    if (!ui.hayDatos() || (mismoUsuario && !meta.pendiente)) { aplicarRemoto(r); return; }
+    // Cambios hechos aquí sin conexión y la nube no ha cambiado desde entonces: se suben
+    if (mismoUsuario && meta.pendiente && meta.rev === r.rev) { await subirAhora(); return; }
+    // Hay datos distintos en ambos lados: se pregunta
+    const fecha = new Date(r.rev).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const eleccion = await ui.preguntarConflicto(r.datos, fecha);
+    if (eleccion === 'nube') aplicarRemoto(r);
+    else await subirAhora();
+  }
+
+  function alCambiarRemoto(snap) {
+    if (!snap.exists() || snap.metadata.hasPendingWrites) return;
+    const r = snap.data();
+    if (r.sesion === SESION || r.rev === meta.rev) return; // es nuestro propio cambio
+    if (meta.pendiente) return; // hay cambios locales a punto de subirse; esos ganan
+    aplicarRemoto(r);
+  }
+
+  ui.onEntrar = async function () {
+    const proveedor = new Au.GoogleAuthProvider();
+    proveedor.setCustomParameters({ prompt: 'select_account' });
+    try {
+      await Au.signInWithPopup(auth, proveedor);
+    } catch (e) {
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+        await Au.signInWithRedirect(auth, proveedor);
+      } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+        ui.toast('No se pudo iniciar sesión (' + e.code + ')', true);
+      }
+    }
+  };
+
+  ui.onSalir = async function () {
+    if (temporizador) await subirAhora();
+    await Au.signOut(auth);
+    ui.toast('Sesión cerrada. Tus datos siguen en este dispositivo.');
+  };
+
+  Au.onAuthStateChanged(auth, async function (u) {
+    if (desuscribir) { desuscribir(); desuscribir = null; }
+    clearTimeout(temporizador);
+    usuario = u;
+    if (!u) { ref = null; ui.mostrarCuenta({ estado: 'fuera' }); return; }
+    ref = F.doc(db, 'usuarios', u.uid);
+    estado('sincronizando');
+    try {
+      await conciliar(await F.getDoc(ref));
+      desuscribir = F.onSnapshot(ref, alCambiarRemoto, () => estado('error'));
+    } catch (e) {
+      estado('error');
+    }
+  });
+
+  // Al cerrar o cambiar de app en el celular, sube lo pendiente de inmediato
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && temporizador) subirAhora();
+  });
+  window.addEventListener('online', function () { if (usuario && meta.pendiente) subirAhora(); });
 })();
 </script>
 </body>
