@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CalculaTuNota</title>
+<meta name="description" content="Calcula tu nota acumulada, lo que necesitas en lo que falta y tu promedio del semestre. Escala 0.00 a 5.00.">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#071327" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230A1F3D'/%3E%3Cpath d='M9 21.5l5-5 3.5 3 5.5-8.5' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --soft: #F4F6F9;
+    --ink: #0A1F3D;
+    --muted: #5A6579;
+    --faint: #939BAC;
+    --line: #E6E9EF;
+    --line-strong: #D3D9E2;
+    --accent: #0A1F3D;
+    --accent-hover: #15335E;
+    --on-accent: #FFFFFF;
+    --ok: #17784A;
+    --warn: #A86500;
+    --bad: #C1352B;
+    --radius: 12px;
+    --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #071327;
+      --surface: #0B1A33;
+      --soft: #10223F;
+      --ink: #F2F5FA;
+      --muted: #A6B0C3;
+      --faint: #6E7B93;
+      --line: #1A2C4A;
+      --line-strong: #273C60;
+      --accent: #FFFFFF;
+      --accent-hover: #E3E9F2;
+      --on-accent: #071327;
+      --ok: #4CC38A;
+      --warn: #F0B54A;
+      --bad: #FF7A6D;
+      color-scheme: dark;
+    }
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, p { margin: 0; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .contenedor { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 16px; }
+
+  /* Colores de estado */
+  [data-nivel="verde"] { --n: var(--ok); }
+  [data-nivel="amarillo"] { --n: var(--warn); }
+  [data-nivel="rojo"] { --n: var(--bad); }
+  .nota-color[data-nivel]:not([data-nivel=""]) { color: var(--n); }
+  .no-cuadra { color: var(--bad) !important; }
+
+  /* ---------- Barra superior ---------- */
+  .barra { border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+  .barra-in { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-top: 18px; padding-bottom: 18px; }
+  .marca { display: flex; align-items: center; gap: 11px; }
+  .logo { width: 30px; height: 30px; flex: none; }
+  .logo rect { fill: var(--accent); }
+  .logo path { stroke: var(--on-accent); }
+  h1 { font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+  .lema { font-size: .75rem; color: var(--muted); }
+  .acciones { display: flex; align-items: center; gap: 8px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 34px; padding: 0 13px;
+    border: 1px solid var(--line-strong); border-radius: 8px;
+    background: transparent; font-size: .84rem; font-weight: 600;
+    transition: border-color .15s, background .15s;
+  }
+  .btn:hover { border-color: var(--ink); }
+  .btn svg { width: 15px; height: 15px; }
+  .btn-primario { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn-primario:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+  /* ---------- Estructura ---------- */
+  main { display: grid; gap: 40px; padding-bottom: 24px; }
+  .tarjeta { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  h2 { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
+  .etq { font-size: .72rem; color: var(--muted); font-weight: 500; }
+  .alerta { color: var(--bad); font-size: .85rem; font-weight: 500; }
+
+  /* ---------- Resumen del semestre ---------- */
+  .resumen { padding: 22px 22px 18px; display: grid; gap: 22px; }
+  .res-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpi { display: grid; align-content: start; gap: 2px; padding: 0 18px; border-left: 1px solid var(--line); }
+  .kpi:first-child { padding-left: 0; border-left: 0; }
+  .kpi-val { font-family: var(--mono); font-size: 1.85rem; font-weight: 500; letter-spacing: -.04em; line-height: 1.25; }
+  .kpi-val small { font-size: .6em; opacity: .75; letter-spacing: 0; }
+  .kpi-sub { font-size: .72rem; color: var(--faint); }
+
+  .tabla-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th { text-align: left; font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); padding: 0 8px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 11px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tfoot td { border-top: 1px solid var(--ink); border-bottom: 0; font-weight: 700; }
+  th:first-child, td:first-child { padding-left: 0; }
+  th:last-child, td:last-child { padding-right: 0; }
+  .num { text-align: right; white-space: nowrap; font-family: var(--mono); }
+  th.num { font-family: inherit; }
+  .t-nombre { font-weight: 600; overflow-wrap: anywhere; }
+  .t-sub { display: block; font-size: .72rem; color: var(--faint); font-weight: 500; }
+  .nota-pie { font-size: .72rem; color: var(--faint); }
+
+  /* ---------- Materias ---------- */
+  .sec-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+  .materias { display: grid; gap: 16px; }
+
+  .vacio { text-align: center; padding: 40px 20px; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--muted); display: grid; gap: 8px; justify-items: center; }
+  .vacio-titulo { font-weight: 700; color: var(--ink); }
+  .vacio p:not(.vacio-titulo) { max-width: 420px; font-size: .9rem; margin-bottom: 6px; }
+
+  .materia { padding: 16px 22px 20px; }
+
+  .m-top { display: flex; align-items: center; gap: 2px; }
+  .m-nombre {
+    flex: 1; min-width: 0; height: 38px; margin-left: -8px; padding: 0 8px;
+    border: 1px solid transparent; border-radius: 8px; background: transparent;
+    font-size: 1.05rem; font-weight: 700; letter-spacing: -.015em;
+  }
+  .m-nombre:hover { border-color: var(--line); }
+  .m-nombre:focus { border-color: var(--ink); outline: none; }
+
+  .icono { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--faint); }
+  .icono:hover { background: var(--soft); color: var(--ink); }
+  .icono.peligro:hover { color: var(--bad); }
+  .icono svg { width: 16px; height: 16px; transition: transform .2s; }
+  [data-accion="plegar"][aria-expanded="false"] svg { transform: rotate(-90deg); }
+
+  .m-ajustes { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 6px 0 0; }
+  .mini { display: inline-flex; align-items: center; gap: 8px; }
+  .mini input { width: 60px; }
+
+  .chip { display: inline-flex; align-items: center; gap: 7px; font-size: .78rem; font-weight: 700; white-space: nowrap; color: var(--n, var(--faint)); }
+  .chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .m-ajustes .chip { margin-left: auto; }
+
+  .campo {
+    height: 38px; width: 100%; padding: 0 10px;
+    border: 1px solid var(--line-strong); border-radius: 8px;
+    background: var(--surface); font-size: 16px; /* 16px evita el zoom en iPhone */
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .campo::placeholder { color: var(--faint); }
+  .campo:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .campo.centro { text-align: center; font-family: var(--mono); }
+  .campo.invalido { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad); color: var(--bad); }
+  .campo:disabled { opacity: .45; }
+
+  .m-cuerpo { display: grid; gap: 18px; margin-top: 18px; }
+
+  .evals { display: grid; gap: 6px; }
+  .ev-grid { display: grid; grid-template-columns: minmax(0, 1fr) 4.6rem 4.6rem 32px; gap: 8px; align-items: center; }
+  .ev-cab span { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); font-weight: 600; }
+  .ev-cab span:nth-child(2), .ev-cab span:nth-child(3) { text-align: center; }
+  .ev-total { font-size: .8rem; color: var(--muted); padding: 2px 0; }
+  .ev-total .tot-pct { text-align: center; font-family: var(--mono); font-weight: 500; }
+  .ev-total .tot-falta { font-weight: 600; }
+
+  .btn-texto { justify-self: start; border: 0; background: none; padding: 4px 0; color: var(--ink); font-size: .84rem; font-weight: 700; }
+  .btn-texto:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  .errores { margin: 0; padding-left: 18px; color: var(--bad); font-size: .82rem; }
+
+  .metricas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .metrica { display: grid; gap: 1px; padding: 0 16px; border-left: 1px solid var(--line); }
+  .metrica:first-child { padding-left: 0; border-left: 0; }
+  .metrica .val { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; letter-spacing: -.03em; line-height: 2.1rem; }
+  .metrica.destacada .val { color: var(--n, var(--ink)); }
+  .metrica .val.texto { font-family: inherit; font-size: 1rem; font-weight: 700; letter-spacing: 0; }
+
+  .mensajes { display: grid; gap: 3px; }
+  .mensaje { font-size: .9rem; }
+  .mensaje b { font-weight: 800; }
+  .mensaje.sec { font-size: .8rem; color: var(--muted); }
+
+  .simulador {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px;
+    padding-top: 16px; border-top: 1px solid var(--line); font-size: .88rem; color: var(--muted);
+  }
+  .simulador .campo { width: 72px; }
+  .sim-res { font-family: var(--mono); font-size: 1.2rem; font-weight: 500; color: var(--ink); }
+
+  .pie { padding: 8px 16px 40px; font-size: .74rem; color: var(--faint); text-align: center; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 20px); opacity: 0;
+    padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--bg);
+    font-size: .85rem; font-weight: 600; pointer-events: none; transition: opacity .2s, transform .2s;
+    max-width: calc(100% - 32px);
+  }
+  .toast.visible { opacity: 1; transform: translate(-50%, 0); }
+  .toast.error { background: var(--bad); color: #fff; }
+
+  @media (max-width: 600px) {
+    body { font-size: 14.5px; }
+    .barra { margin-bottom: 24px; }
+    .barra-in { padding-top: 14px; padding-bottom: 14px; }
+    .acciones { width: 100%; }
+    .acciones .btn { flex: 1; justify-content: center; }
+    main { gap: 32px; }
+    .resumen { padding: 18px 16px 14px; }
+    .kpi { padding: 0 10px; }
+    .kpi-val { font-size: 1.35rem; }
+    .materia { padding: 14px 16px 18px; }
+    .metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+    .metrica:nth-child(odd) { padding-left: 0; border-left: 0; }
+    .ev-grid { grid-template-columns: minmax(0, 1fr) 3.9rem 3.9rem 28px; gap: 6px; }
+    .icono { width: 28px; height: 28px; }
+    .m-ajustes .chip { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="barra">
+  <div class="contenedor barra-in">
+    <div class="marca">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M9 21.5l5-5 3.5 3 5.5-8.5" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>
+        <h1>CalculaTuNota</h1>
+        <p class="lema">Escala 0.00 – 5.00 · Se aprueba con 2.95</p>
+      </div>
+    </div>
+    <div class="acciones">
+      <button type="button" class="btn" id="btn-exportar" title="Descargar tus datos en JSON">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>Exportar
+      </button>
+      <button type="button" class="btn" id="btn-importar" title="Cargar datos desde un JSON">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4m0 0L8 8m4-4l4 4M5 19h14"/></svg>Importar
+      </button>
+      <input type="file" id="archivo" accept="application/json,.json" hidden>
+    </div>
+  </div>
+</header>
+
+<main class="contenedor">
+  <p id="aviso-guardado" class="alerta" hidden>No se pudo guardar en este navegador (¿modo privado?). Usa “Exportar” para no perder tus datos.</p>
+
+  <section id="resumen" class="tarjeta resumen" aria-labelledby="t-resumen" hidden>
+    <div class="res-cab">
+      <h2 id="t-resumen">Semestre</h2>
+      <label class="mini"><span class="etq">Créditos inscritos</span><input class="campo centro" id="creditos-inscritos" inputmode="numeric" placeholder="18" autocomplete="off"></label>
+    </div>
+    <div class="kpis">
+      <div class="kpi">
+        <span class="etq">Promedio actual</span>
+        <span class="kpi-val" id="prom-actual">—</span>
+        <span class="kpi-sub" id="prom-actual-sub"></span>
+      </div>
+      <div class="kpi">
+        <span class="etq">Proyectado</span>
+        <span class="kpi-val" id="prom-proy">—</span>
+        <span class="kpi-sub">Sacando tu meta en lo pendiente</span>
+      </div>
+      <div class="kpi">
+        <span class="etq">Créditos</span>
+        <span class="kpi-val" id="creditos-total">0</span>
+        <span class="kpi-sub" id="materias-total"></span>
+      </div>
+    </div>
+    <div class="tabla-scroll">
+      <table>
+        <thead>
+          <tr><th>Materia</th><th class="num">Créd.</th><th class="num">Actual</th><th class="num">Proyectada</th></tr>
+        </thead>
+        <tbody id="resumen-filas"></tbody>
+        <tfoot>
+          <tr><td>Promedio ponderado</td><td class="num" id="pie-creditos"></td><td class="num nota-color" id="pie-actual"></td><td class="num nota-color" id="pie-proy"></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <p class="nota-pie">En materias en curso, “Actual” es tu promedio sobre lo ya evaluado; al terminar, es la nota final. “Proyectada” supone que sacas tu meta en todo lo pendiente.</p>
+  </section>
+
+  <section aria-labelledby="t-materias">
+    <div class="sec-cab">
+      <h2 id="t-materias">Materias</h2>
+      <button type="button" class="btn btn-primario" id="btn-agregar">+ Agregar materia</button>
+    </div>
+    <div id="vacio" class="vacio">
+      <p class="vacio-titulo">Aún no tienes materias</p>
+      <p>Agrega cada materia con sus evaluaciones y porcentajes. Todo se calcula mientras escribes y se guarda solo en este navegador.</p>
+      <button type="button" class="btn" id="btn-ejemplo">Ver un ejemplo</button>
+    </div>
+    <div id="materias" class="materias"></div>
+  </section>
+</main>
+
+<footer class="pie">Tus datos se guardan solo en este navegador. Usa “Exportar” para tener un respaldo o pasarlos a otro dispositivo.</footer>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- =====================================================================
+     LÓGICA DE CÁLCULO (funciones puras, sin DOM). Se prueba con pruebas.js
+     ===================================================================== -->
+<script id="nucleo">
+(function (raiz) {
+  'use strict';
+
+  var NOTA_MAX = 5;
+  var APROBACION = 2.95; // 2.95 aprueba; 2.94 o menos reprueba
+  var META_DEFECTO = 3;
+
+  /** Quita el ruido de punto flotante (0.1 + 0.2 -> 0.3). */
+  function limpiar(x) {
+    return typeof x === 'number' && isFinite(x) ? Number(x.toPrecision(12)) : x;
+  }
+
+  /**
+   * Redondea "mitad hacia arriba" sin errores de punto flotante.
+   * 2.775 * 100 = 277.49999999999997 en JS; al limpiar queda 277.5 -> 278 -> 2.78.
+   */
+  function redondear(x, decimales) {
+    if (typeof x !== 'number' || !isFinite(x)) return x;
+    var d = decimales == null ? 2 : decimales;
+    var factor = Math.pow(10, d);
+    var escalado = Number((Math.abs(x) * factor).toPrecision(12));
+    var r = Math.round(escalado) / factor;
+    if (r === 0) return 0;
+    return x < 0 ? -r : r;
+  }
+
+  function formatear(x, decimales) {
+    var d = decimales == null ? 2 : decimales;
+    return redondear(x, d).toFixed(d);
+  }
+
+  /** Acepta "3,5" o "3.5". Vacío -> null. Texto inválido -> NaN. */
+  function parsearNumero(valor) {
+    if (valor === null || valor === undefined) return null;
+    if (typeof valor === 'number') return isFinite(valor) ? valor : NaN;
+    var s = String(valor).replace(/\s+/g, '');
+    if (s === '') return null;
+    s = s.replace(',', '.');
+    if (!/^[+-]?(\d+(\.\d*)?|\.\d+)$/.test(s)) return NaN;
+    return Number(s);
+  }
+
+  function esNotaValida(n) {
+    return typeof n === 'number' && isFinite(n) && n >= 0 && n <= NOTA_MAX;
+  }
+
+  function esPorcentajeValido(p) {
+    return typeof p === 'number' && isFinite(p) && p >= 0 && p <= 100;
+  }
+
+  /** (meta − acumulada) / porcentaje restante. null si no queda nada por evaluar. */
+  function notaNecesaria(acumulada, restante, meta) {
+    if (!(restante > 0)) return null;
+    return limpiar((meta - acumulada) / (restante / 100));
+  }
+
+  /** Nota final si saco `notaPendiente` en todo lo que falta. */
+  function notaFinalSimulada(acumulada, restante, notaPendiente) {
+    return limpiar(acumulada + notaPendiente * Math.max(0, restante) / 100);
+  }
+
+  function aprueba(nota) {
+    return redondear(nota, 2) >= APROBACION;
+  }
+
+  /** verde ≤ 3.0 · amarillo entre 3.0 y 4.0 · rojo > 4.0 */
+  function colorNecesaria(n) {
+    var r = redondear(n, 2);
+    if (r <= 3) return 'verde';
+    if (r <= 4) return 'amarillo';
+    return 'rojo';
+  }
+
+  /** Nota de una materia: rojo < 2.95 (reprueba) · amarillo 2.95–2.99 · verde ≥ 3.00 */
+  function colorNotaFinal(n) {
+    var r = redondear(n, 2);
+    if (r < APROBACION) return 'rojo';
+    if (r < 3) return 'amarillo';
+    return 'verde';
+  }
+
+  /** Compara los créditos inscritos del semestre con la suma de créditos de las materias. */
+  function verificarCreditos(inscritos, registrados) {
+    if (typeof inscritos !== 'number' || !isFinite(inscritos) || inscritos <= 0) return { estado: 'sin-dato', diferencia: null };
+    var d = limpiar(inscritos - registrados);
+    return { estado: d === 0 ? 'ok' : (d > 0 ? 'faltan' : 'sobran'), diferencia: Math.abs(d) };
+  }
+
+  /**
+   * evaluaciones: [{ porcentaje: number|null, nota: number|null }]
+   * Las filas con porcentaje inválido se ignoran; una nota vacía o inválida
+   * cuenta como pendiente.
+   */
+  function calcularMateria(evaluaciones, meta) {
+    meta = esNotaValida(meta) ? meta : META_DEFECTO;
+    var total = 0, evaluado = 0, acumulada = 0;
+
+    (evaluaciones || []).forEach(function (e) {
+      if (!e || !esPorcentajeValido(e.porcentaje)) return;
+      total += e.porcentaje;
+      if (esNotaValida(e.nota)) {
+        evaluado += e.porcentaje;
+        acumulada += e.nota * e.porcentaje / 100;
+      }
+    });
+
+    total = limpiar(total);
+    evaluado = limpiar(evaluado);
+    acumulada = limpiar(acumulada);
+    var restante = Math.max(0, limpiar(100 - evaluado));
+    var necesaria = notaNecesaria(acumulada, restante, meta);
+
+    var estado;
+    if (restante === 0) estado = redondear(acumulada, 2) >= meta ? 'meta-cumplida' : 'meta-no-cumplida';
+    else if (redondear(necesaria, 2) > NOTA_MAX) estado = 'inalcanzable';
+    else if (necesaria <= 0) estado = 'asegurada';
+    else estado = 'posible';
+
+    return {
+      meta: meta,
+      porcentajeTotal: total,
+      porcentajeEvaluado: evaluado,
+      porcentajeRestante: restante,
+      sumaCorrecta: Math.abs(total - 100) < 1e-9,
+      acumulada: acumulada,
+      necesaria: necesaria,
+      estado: estado,
+      notaMaxima: notaFinalSimulada(acumulada, restante, NOTA_MAX),
+      promedioEvaluado: evaluado > 0 ? limpiar(acumulada / (evaluado / 100)) : null,
+      completa: restante === 0
+    };
+  }
+
+  /**
+   * materias: [{ nombre, creditos: number|null, calculo: resultado de calcularMateria }]
+   * - Actual: nota final si la materia terminó; si no, promedio sobre lo evaluado.
+   * - Proyectada: acumulada + meta × porcentaje restante.
+   */
+  function resumenSemestre(materias) {
+    var sumaA = 0, credA = 0, sumaP = 0, credP = 0;
+    var filas = (materias || []).map(function (m) {
+      var c = m.calculo;
+      var cred = m.creditos;
+      var credOk = typeof cred === 'number' && isFinite(cred) && cred > 0;
+      var actual = c.completa ? c.acumulada : c.promedioEvaluado;
+      var proyectada = notaFinalSimulada(c.acumulada, c.porcentajeRestante, Math.min(c.meta, NOTA_MAX));
+      if (credOk) {
+        if (actual !== null) { sumaA += actual * cred; credA += cred; }
+        sumaP += proyectada * cred; credP += cred;
+      }
+      return {
+        nombre: m.nombre, creditos: credOk ? cred : null, actual: actual, proyectada: proyectada,
+        completa: c.completa, porcentajeEvaluado: c.porcentajeEvaluado
+      };
+    });
+    return {
+      filas: filas,
+      promedioActual: credA ? limpiar(sumaA / credA) : null,
+      creditosConNota: limpiar(credA),
+      promedioProyectado: credP ? limpiar(sumaP / credP) : null,
+      creditosTotales: limpiar(credP)
+    };
+  }
+
+  raiz.Nota = {
+    NOTA_MAX: NOTA_MAX, APROBACION: APROBACION, META_DEFECTO: META_DEFECTO,
+    limpiar: limpiar, redondear: redondear, formatear: formatear, parsearNumero: parsearNumero,
+    esNotaValida: esNotaValida, esPorcentajeValido: esPorcentajeValido,
+    notaNecesaria: notaNecesaria, notaFinalSimulada: notaFinalSimulada,
+    aprueba: aprueba, colorNecesaria: colorNecesaria, colorNotaFinal: colorNotaFinal,
+    verificarCreditos: verificarCreditos,
+    calcularMateria: calcularMateria, resumenSemestre: resumenSemestre
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<!-- =====================================================================
+     INTERFAZ
+     ===================================================================== -->
+<script>
+(function () {
+  'use strict';
+  var N = window.Nota;
+  var CLAVE = 'calculatunota.v1';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+
+  var ICONO = {
+    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
+    basura: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>'
+  };
+
+  var contador = 0;
+  function uid() { return 'i' + Date.now().toString(36) + (contador++).toString(36) + Math.random().toString(36).slice(2, 6); }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function texto(v, max) { return v === null || v === undefined ? '' : String(v).slice(0, max); }
+
+  /* ---------- Datos y guardado ---------- */
+  function normalizar(d) {
+    if (Array.isArray(d)) d = { materias: d };
+    if (!d || typeof d !== 'object' || !Array.isArray(d.materias)) return null;
+    return {
+      creditosSemestre: texto(d.creditosSemestre, 6),
+      materias: d.materias.filter(function (m) { return m && typeof m === 'object'; }).map(function (m) {
+        return {
+          id: uid(),
+          nombre: texto(m.nombre, 60) || 'Materia',
+          creditos: texto(m.creditos, 6),
+          meta: m.meta === undefined || m.meta === null ? '3.00' : texto(m.meta, 6),
+          simulacion: texto(m.simulacion, 6),
+          abierta: m.abierta !== false,
+          evaluaciones: (Array.isArray(m.evaluaciones) ? m.evaluaciones : [])
+            .filter(function (e) { return e && typeof e === 'object'; })
+            .map(function (e) {
+              return { id: uid(), nombre: texto(e.nombre, 60), porcentaje: texto(e.porcentaje, 8), nota: texto(e.nota, 6) };
+            })
+        };
+      })
+    };
+  }
+
+  function cargar() {
+    try {
+      var raw = localStorage.getItem(CLAVE);
+      if (raw) { var d = normalizar(JSON.parse(raw)); if (d) return d; }
+    } catch (e) { /* sin acceso a localStorage o datos dañados */ }
+    return { creditosSemestre: '', materias: [] };
+  }
+
+  function serializar() {
+    return {
+      app: 'CalculaTuNota',
+      version: 1,
+      creditosSemestre: datos.creditosSemestre,
+      materias: datos.materias.map(function (m) {
+        return {
+          nombre: m.nombre, creditos: m.creditos, meta: m.meta, simulacion: m.simulacion, abierta: m.abierta,
+          evaluaciones: m.evaluaciones.map(function (e) { return { nombre: e.nombre, porcentaje: e.porcentaje, nota: e.nota }; })
+        };
+      })
+    };
+  }
+
+  function guardar() {
+    var ok = true;
+    try { localStorage.setItem(CLAVE, JSON.stringify(serializar())); } catch (e) { ok = false; }
+    $('#aviso-guardado').hidden = ok;
+  }
+
+  var datos = cargar();
+  var lista = $('#materias');
+
+  function buscar(id) { return datos.materias.find(function (m) { return m.id === id; }); }
+  function nuevaEval(nombre) { return { id: uid(), nombre: nombre || '', porcentaje: '', nota: '' }; }
+
+  /* ---------- Formato ---------- */
+  // Todas las notas se muestran con dos decimales (3.02, 2.78, 3.00…)
+  function fmt(x) { return N.formatear(x, 2); }
+  function pct(p) { return String(N.redondear(p, 2)) + '%'; }
+  var APROB_TXT = N.formatear(N.APROBACION, 2);
+  function num(n) { return String(N.redondear(n, 2)); }
+
+  /* ---------- Validación de campos ---------- */
+  var REGLAS = {
+    porcentaje: N.esPorcentajeValido,
+    nota: N.esNotaValida,
+    meta: N.esNotaValida,
+    simulacion: N.esNotaValida,
+    creditos: function (v) { return v >= 0 && v <= 40; },
+    inscritos: function (v) { return v >= 0 && v <= 60; }
+  };
+  function valido(tipo, raw) {
+    var v = N.parsearNumero(raw);
+    if (v === null) return true;
+    return !isNaN(v) && REGLAS[tipo](v);
+  }
+  function marcar(input, ok) {
+    if (input) { input.classList.toggle('invalido', !ok); input.setAttribute('aria-invalid', String(!ok)); }
+    return ok;
+  }
+
+  function calculoDe(m) {
+    return N.calcularMateria(
+      m.evaluaciones.map(function (e) { return { porcentaje: N.parsearNumero(e.porcentaje), nota: N.parsearNumero(e.nota) }; }),
+      N.parsearNumero(m.meta)
+    );
+  }
+
+  function nivelDe(c) {
+    if (c.completa) return N.colorNotaFinal(c.acumulada);
+    if (c.estado === 'asegurada') return 'verde';
+    if (c.estado === 'inalcanzable') return 'rojo';
+    return N.colorNecesaria(c.necesaria);
+  }
+
+  /* ---------- Plantillas ---------- */
+  function htmlEval(e) {
+    return '<div class="ev-grid ev-fila" data-ev="' + e.id + '">' +
+      '<input class="campo" data-campo="ev-nombre" value="' + esc(e.nombre) + '" placeholder="Ej. Parcial 1" aria-label="Nombre de la evaluación" maxlength="60">' +
+      '<input class="campo centro" data-campo="ev-porcentaje" value="' + esc(e.porcentaje) + '" inputmode="decimal" placeholder="%" aria-label="Porcentaje" autocomplete="off">' +
+      '<input class="campo centro" data-campo="ev-nota" value="' + esc(e.nota) + '" inputmode="decimal" placeholder="—" aria-label="Nota" autocomplete="off">' +
+      '<button type="button" class="icono peligro" data-accion="borrar-eval" aria-label="Borrar evaluación" title="Borrar evaluación">' + ICONO.x + '</button>' +
+    '</div>';
+  }
+
+  function htmlMateria(m) {
+    return '<article class="tarjeta materia" data-id="' + m.id + '">' +
+      '<div class="m-top">' +
+        '<input class="m-nombre" data-campo="nombre" value="' + esc(m.nombre) + '" aria-label="Nombre de la materia" maxlength="60" spellcheck="false">' +
+        '<button type="button" class="icono" data-accion="plegar" aria-expanded="' + m.abierta + '" aria-label="Mostrar u ocultar detalles" title="Mostrar u ocultar">' + ICONO.chevron + '</button>' +
+        '<button type="button" class="icono peligro" data-accion="borrar-materia" aria-label="Borrar materia" title="Borrar materia">' + ICONO.basura + '</button>' +
+      '</div>' +
+      '<div class="m-ajustes">' +
+        '<label class="mini"><span class="etq">Créditos</span><input class="campo centro" data-campo="creditos" value="' + esc(m.creditos) + '" inputmode="numeric" autocomplete="off"></label>' +
+        '<label class="mini"><span class="etq">Meta</span><input class="campo centro" data-campo="meta" value="' + esc(m.meta) + '" inputmode="decimal" placeholder="3.00" autocomplete="off"></label>' +
+        '<span class="chip" data-out="chip"></span>' +
+      '</div>' +
+      '<div class="m-cuerpo"' + (m.abierta ? '' : ' hidden') + '>' +
+        '<div class="evals">' +
+          '<div class="ev-grid ev-cab" aria-hidden="true"><span>Evaluación</span><span>%</span><span>Nota</span><span></span></div>' +
+          m.evaluaciones.map(htmlEval).join('') +
+          '<div class="ev-grid ev-total" data-out="total"><span>Total <span data-out="total-falta"></span></span><span class="tot-pct" data-out="total-pct"></span><span></span><span></span></div>' +
+          '<button type="button" class="btn-texto" data-accion="agregar-eval">+ Agregar evaluación</button>' +
+        '</div>' +
+        '<ul class="errores" data-out="errores" hidden></ul>' +
+        '<div class="metricas">' +
+          '<div class="metrica"><span class="etq">Acumulada</span><span class="val" data-out="acumulada"></span></div>' +
+          '<div class="metrica"><span class="etq">Evaluado</span><span class="val" data-out="evaluado"></span></div>' +
+          '<div class="metrica"><span class="etq">Falta</span><span class="val" data-out="falta"></span></div>' +
+          '<div class="metrica destacada" data-out="caja"><span class="etq" data-out="caja-etq">Necesitas</span><span class="val" data-out="necesaria"></span></div>' +
+        '</div>' +
+        '<div class="mensajes"><p class="mensaje" data-out="mensaje"></p><p class="mensaje sec" data-out="aprobar"></p></div>' +
+        '<div class="simulador">' +
+          '<label for="sim-' + m.id + '">Si saco</label>' +
+          '<input class="campo centro" id="sim-' + m.id + '" data-campo="simulacion" value="' + esc(m.simulacion) + '" inputmode="decimal" placeholder="0.00" autocomplete="off">' +
+          '<span data-out="sim-texto">en lo que falta, cierro con</span>' +
+          '<span class="sim-res nota-color" data-out="sim-res">—</span>' +
+          '<span class="chip" data-out="sim-chip" hidden></span>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  /* ---------- Actualización en vivo de una materia ---------- */
+  function actualizarMateria(m, art) {
+    art = art || lista.querySelector('.materia[data-id="' + m.id + '"]');
+    if (!art) return;
+    var o = function (n) { return art.querySelector('[data-out="' + n + '"]'); };
+    var c = calculoDe(m);
+    var metaTxt = fmt(c.meta);
+
+    // Validación de campos
+    var errores = [];
+    if (!marcar(art.querySelector('[data-campo="creditos"]'), valido('creditos', m.creditos)))
+      errores.push('Los créditos deben ser un número entre 0 y 40.');
+    if (!marcar(art.querySelector('[data-campo="meta"]'), valido('meta', m.meta)))
+      errores.push('La meta debe estar entre 0.00 y 5.00 (mientras tanto se usa 3.00).');
+    m.evaluaciones.forEach(function (e, i) {
+      var fila = art.querySelector('[data-ev="' + e.id + '"]');
+      if (!fila) return;
+      var nom = e.nombre.trim() || 'Evaluación ' + (i + 1);
+      if (!marcar(fila.querySelector('[data-campo="ev-porcentaje"]'), valido('porcentaje', e.porcentaje)))
+        errores.push(nom + ': el porcentaje debe estar entre 0 y 100.');
+      if (!marcar(fila.querySelector('[data-campo="ev-nota"]'), valido('nota', e.nota)))
+        errores.push(nom + ': la nota debe estar entre 0.00 y 5.00.');
+    });
+    var ul = o('errores');
+    ul.hidden = errores.length === 0;
+    ul.innerHTML = errores.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+
+    // Total de porcentajes: en rojo mientras no sume 100 %
+    var hayPct = c.porcentajeTotal > 0;
+    var noCuadra = hayPct && !c.sumaCorrecta;
+    o('total').hidden = m.evaluaciones.length === 0;
+    o('total-pct').textContent = pct(c.porcentajeTotal);
+    o('total-pct').classList.toggle('no-cuadra', noCuadra);
+    var falta = o('total-falta');
+    falta.className = 'tot-falta no-cuadra';
+    falta.textContent = !noCuadra ? '' : (c.porcentajeTotal < 100
+      ? '· faltan ' + pct(100 - c.porcentajeTotal)
+      : '· sobran ' + pct(c.porcentajeTotal - 100));
+
+    // Métricas
+    o('acumulada').textContent = fmt(c.acumulada);
+    o('evaluado').textContent = pct(c.porcentajeEvaluado);
+    o('falta').textContent = pct(c.porcentajeRestante);
+    o('falta').classList.toggle('no-cuadra', noCuadra);
+
+    var nivel = hayPct ? nivelDe(c) : '';
+    art.dataset.nivel = nivel;
+    var caja = o('caja'), val = o('necesaria'), chip = o('chip');
+    var msg = '', msgAprobar = '', chipTxt = '';
+    val.classList.remove('texto');
+
+    if (!hayPct) {
+      o('caja-etq').textContent = 'Necesitas';
+      val.textContent = '—';
+      msg = 'Agrega tus evaluaciones con su porcentaje para empezar.';
+      chipTxt = 'Sin evaluaciones';
+    } else if (c.completa) {
+      o('caja-etq').textContent = 'Nota final';
+      val.textContent = fmt(c.acumulada);
+      var ap = N.aprueba(c.acumulada);
+      msg = 'Materia cerrada con <b>' + fmt(c.acumulada) + '</b>: ' + (ap ? 'aprobada' : 'reprobada') +
+        (c.estado === 'meta-cumplida' ? ' y meta de ' + metaTxt + ' cumplida.' : '. La meta de ' + metaTxt + ' no se alcanzó.');
+      chipTxt = 'Final ' + fmt(c.acumulada);
+    } else {
+      o('caja-etq').textContent = 'Necesitas';
+      if (c.estado === 'asegurada') {
+        val.textContent = 'Asegurada';
+        val.classList.add('texto');
+        msg = 'Tu meta de ' + metaTxt + ' ya está asegurada: aun sacando 0.00 en lo que falta, cierras con <b>' + fmt(c.acumulada) + '</b>.';
+        chipTxt = 'Meta asegurada';
+      } else if (c.estado === 'inalcanzable') {
+        val.textContent = fmt(c.necesaria);
+        msg = 'La meta de ' + metaTxt + ' ya no se alcanza. La nota máxima posible es <b>' + fmt(c.notaMaxima) + '</b> (sacando 5.00 en todo lo que falta).';
+        chipTxt = 'Meta inalcanzable';
+      } else {
+        val.textContent = fmt(c.necesaria);
+        msg = 'Necesitas <b>' + fmt(c.necesaria) + '</b> en el ' + pct(c.porcentajeRestante) + ' que falta para cerrar con ' + metaTxt + '.';
+        chipTxt = 'Necesitas ' + fmt(c.necesaria);
+      }
+      if (N.redondear(c.meta, 2) !== N.APROBACION) {
+        var nAp = N.notaNecesaria(c.acumulada, c.porcentajeRestante, N.APROBACION);
+        if (nAp <= 0) msgAprobar = 'Ya tienes asegurado aprobar (' + APROB_TXT + ').';
+        else if (N.redondear(nAp, 2) > N.NOTA_MAX) msgAprobar = 'Ya no alcanza para aprobar (mínimo ' + APROB_TXT + ').';
+        else msgAprobar = 'Para aprobar (' + APROB_TXT + ') necesitas ' + fmt(nAp) + ' en lo que falta.';
+      }
+    }
+    caja.dataset.nivel = nivel;
+    chip.dataset.nivel = nivel;
+    chip.textContent = chipTxt;
+    o('mensaje').innerHTML = msg;
+    o('aprobar').textContent = msgAprobar;
+    o('aprobar').hidden = !msgAprobar;
+
+    // Simulador
+    var simInput = art.querySelector('[data-campo="simulacion"]');
+    var simRes = o('sim-res'), simChip = o('sim-chip');
+    var x = N.parsearNumero(m.simulacion);
+    var simOk = marcar(simInput, valido('simulacion', m.simulacion));
+    simInput.disabled = c.completa;
+    simChip.hidden = true;
+    simChip.dataset.nivel = '';
+    simRes.dataset.nivel = '';
+    if (c.completa) {
+      simRes.textContent = fmt(c.acumulada);
+      simRes.dataset.nivel = N.colorNotaFinal(c.acumulada);
+      o('sim-texto').textContent = 'No queda nada pendiente; cierras con';
+    } else {
+      o('sim-texto').textContent = 'en lo que falta, cierro con';
+      if (x === null) {
+        simRes.textContent = '—';
+      } else if (!simOk) {
+        simRes.textContent = '—';
+        simChip.hidden = false;
+        simChip.dataset.nivel = 'rojo';
+        simChip.textContent = 'Escribe una nota de 0.00 a 5.00';
+      } else {
+        var final = N.notaFinalSimulada(c.acumulada, c.porcentajeRestante, x);
+        var nivelSim = N.colorNotaFinal(final);
+        var cumple = N.redondear(final, 2) >= c.meta;
+        simRes.textContent = fmt(final);
+        simRes.dataset.nivel = nivelSim;
+        simChip.hidden = false;
+        simChip.dataset.nivel = nivelSim;
+        simChip.textContent = !N.aprueba(final) ? 'Reprobarías'
+          : (nivelSim === 'amarillo' ? 'Apruebas por poco' : 'Apruebas') + (cumple ? ' y cumples la meta' : ', sin llegar a la meta');
+      }
+    }
+  }
+
+  /* ---------- Resumen del semestre ---------- */
+  function renderResumen() {
+    var ms = datos.materias;
+    $('#resumen').hidden = ms.length === 0;
+    if (!ms.length) return;
+    var r = N.resumenSemestre(ms.map(function (m) {
+      return { nombre: m.nombre, creditos: N.parsearNumero(m.creditos), calculo: calculoDe(m) };
+    }));
+    var pa = r.promedioActual === null ? '—' : fmt(r.promedioActual);
+    var pp = r.promedioProyectado === null ? '—' : fmt(r.promedioProyectado);
+    $('#prom-actual').textContent = pa;
+    $('#prom-actual-sub').textContent = r.creditosConNota ? 'Sobre ' + num(r.creditosConNota) + ' créditos con notas' : 'Aún no hay notas';
+    $('#prom-proy').textContent = pp;
+
+    // Créditos inscritos del semestre vs. créditos de las materias
+    var nMat = ms.length + (ms.length === 1 ? ' materia' : ' materias');
+    var inscOk = marcar($('#creditos-inscritos'), valido('inscritos', datos.creditosSemestre));
+    var insc = inscOk ? N.parsearNumero(datos.creditosSemestre) : null;
+    var vc = N.verificarCreditos(insc, r.creditosTotales);
+    // "3 / 21" en rojo mientras no sea "21 / 21"
+    var crNoCuadra = vc.estado === 'faltan' || vc.estado === 'sobran';
+    $('#creditos-total').innerHTML = num(r.creditosTotales) + (vc.estado === 'sin-dato' ? '' : ' <small>/ ' + num(insc) + '</small>');
+    $('#creditos-total').classList.toggle('no-cuadra', crNoCuadra);
+    $('#materias-total').classList.toggle('no-cuadra', crNoCuadra);
+    $('#materias-total').textContent =
+      vc.estado === 'faltan' ? 'Faltan ' + num(vc.diferencia) + ' por registrar'
+      : vc.estado === 'sobran' ? 'Sobran ' + num(vc.diferencia)
+      : vc.estado === 'ok' ? nMat + ' · completos' : nMat;
+
+    $('#resumen-filas').innerHTML = r.filas.map(function (f) {
+      var estado = f.completa ? 'Final' : (f.porcentajeEvaluado > 0 ? 'En curso · ' + pct(f.porcentajeEvaluado) + ' evaluado' : 'Sin notas');
+      var actual = f.actual === null ? '—' : fmt(f.actual);
+      var nivelA = f.actual === null ? '' : N.colorNotaFinal(f.actual);
+      return '<tr>' +
+        '<td class="t-nombre">' + esc(f.nombre || 'Materia') + '<span class="t-sub">' + estado + '</span></td>' +
+        '<td class="num">' + (f.creditos === null ? '—' : num(f.creditos)) + '</td>' +
+        '<td class="num nota-color" data-nivel="' + nivelA + '">' + actual + '</td>' +
+        '<td class="num nota-color" data-nivel="' + N.colorNotaFinal(f.proyectada) + '">' + fmt(f.proyectada) + '</td>' +
+      '</tr>';
+    }).join('');
+    $('#pie-creditos').textContent = num(r.creditosTotales);
+    $('#pie-actual').textContent = pa;
+    $('#pie-actual').dataset.nivel = r.promedioActual === null ? '' : N.colorNotaFinal(r.promedioActual);
+    $('#pie-proy').textContent = pp;
+    $('#pie-proy').dataset.nivel = r.promedioProyectado === null ? '' : N.colorNotaFinal(r.promedioProyectado);
+  }
+
+  /* ---------- Render general ---------- */
+  function renderTodo() {
+    lista.innerHTML = datos.materias.map(htmlMateria).join('');
+    datos.materias.forEach(function (m) { actualizarMateria(m); });
+    $('#vacio').hidden = datos.materias.length > 0;
+    $('#creditos-inscritos').value = datos.creditosSemestre;
+    renderResumen();
+  }
+
+  function renderMateria(m) {
+    var art = lista.querySelector('.materia[data-id="' + m.id + '"]');
+    if (!art) return renderTodo();
+    art.outerHTML = htmlMateria(m);
+    actualizarMateria(m);
+  }
+
+  var tToast;
+  function toast(msg, error) {
+    var t = $('#toast');
+    t.textContent = msg;
+    t.classList.toggle('error', !!error);
+    t.classList.add('visible');
+    clearTimeout(tToast);
+    tToast = setTimeout(function () { t.classList.remove('visible'); }, 2600);
+  }
+
+  /* ---------- Acciones ---------- */
+  function agregarMateria(m, enfocar) {
+    datos.materias.push(m);
+    guardar();
+    renderTodo();
+    var art = lista.querySelector('.materia[data-id="' + m.id + '"]');
+    if (enfocar) { var inp = art.querySelector('.m-nombre'); inp.focus(); inp.select(); }
+    else art.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  $('#btn-agregar').addEventListener('click', function () {
+    agregarMateria({
+      id: uid(), nombre: 'Materia ' + (datos.materias.length + 1), creditos: '3', meta: '3.00',
+      simulacion: '', abierta: true, evaluaciones: [nuevaEval('Parcial 1')]
+    }, true);
+  });
+
+  $('#btn-ejemplo').addEventListener('click', function () {
+    agregarMateria({
+      id: uid(), nombre: 'Cálculo II', creditos: '4', meta: '3.00', simulacion: '3.5', abierta: true,
+      evaluaciones: [
+        { id: uid(), nombre: 'Parcial 1', porcentaje: '30', nota: '3,5' },
+        { id: uid(), nombre: 'Parcial 2', porcentaje: '30', nota: '2.8' },
+        { id: uid(), nombre: 'Examen final', porcentaje: '40', nota: '' }
+      ]
+    }, false);
+  });
+
+  $('#creditos-inscritos').addEventListener('input', function (ev) {
+    datos.creditosSemestre = ev.target.value;
+    guardar();
+    renderResumen();
+  });
+
+  lista.addEventListener('input', function (ev) {
+    var t = ev.target, campo = t.dataset && t.dataset.campo;
+    if (!campo) return;
+    var art = t.closest('.materia'), m = buscar(art.dataset.id);
+    if (!m) return;
+    if (campo.indexOf('ev-') === 0) {
+      var id = t.closest('.ev-fila').dataset.ev;
+      var e = m.evaluaciones.find(function (x) { return x.id === id; });
+      if (e) e[campo.slice(3)] = t.value;
+    } else {
+      m[campo] = t.value;
+    }
+    guardar();
+    actualizarMateria(m, art);
+    renderResumen();
+  });
+
+  lista.addEventListener('change', function (ev) {
+    // Nombre vacío al salir del campo: se restaura uno por defecto
+    var t = ev.target;
+    if (t.dataset && t.dataset.campo === 'nombre' && !t.value.trim()) {
+      var m = buscar(t.closest('.materia').dataset.id);
+      m.nombre = t.value = 'Materia';
+      guardar();
+      renderResumen();
+    }
+  });
+
+  lista.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-accion]');
+    if (!b) return;
+    var art = b.closest('.materia'), m = buscar(art.dataset.id), acc = b.dataset.accion;
+    if (!m) return;
+
+    if (acc === 'plegar') {
+      m.abierta = !m.abierta;
+      art.querySelector('.m-cuerpo').hidden = !m.abierta;
+      b.setAttribute('aria-expanded', String(m.abierta));
+      guardar();
+    } else if (acc === 'borrar-materia') {
+      if (!confirm('¿Borrar "' + (m.nombre || 'esta materia') + '" y todas sus evaluaciones?')) return;
+      datos.materias = datos.materias.filter(function (x) { return x !== m; });
+      guardar();
+      renderTodo();
+      toast('Materia borrada');
+    } else if (acc === 'agregar-eval') {
+      var e = nuevaEval('');
+      m.evaluaciones.push(e);
+      guardar();
+      renderMateria(m);
+      lista.querySelector('[data-ev="' + e.id + '"] [data-campo="ev-nombre"]').focus();
+    } else if (acc === 'borrar-eval') {
+      var id = b.closest('.ev-fila').dataset.ev;
+      m.evaluaciones = m.evaluaciones.filter(function (x) { return x.id !== id; });
+      guardar();
+      renderMateria(m);
+      renderResumen();
+    }
+  });
+
+  // Enter: pasa a la siguiente fila (o crea una nueva al final)
+  lista.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Enter') return;
+    var t = ev.target, campo = t.dataset && t.dataset.campo;
+    if (!campo) return;
+    if (campo.indexOf('ev-') !== 0) { t.blur(); return; }
+    ev.preventDefault();
+    var sig = t.closest('.ev-fila').nextElementSibling;
+    if (sig && sig.classList.contains('ev-fila')) sig.querySelector('[data-campo="' + campo + '"]').focus();
+    else t.closest('.materia').querySelector('[data-accion="agregar-eval"]').click();
+  });
+
+  /* ---------- Exportar / importar ---------- */
+  $('#btn-exportar').addEventListener('click', function () {
+    if (!datos.materias.length) { toast('Aún no hay nada para exportar'); return; }
+    var json = JSON.stringify(Object.assign(serializar(), { exportado: new Date().toISOString() }), null, 2);
+    var url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    var a = document.createElement('a');
+    var hoy = new Date();
+    var f = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    a.href = url;
+    a.download = 'calculatunota-' + f + '.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    toast('Respaldo descargado');
+  });
+
+  $('#btn-importar').addEventListener('click', function () { $('#archivo').click(); });
+
+  $('#archivo').addEventListener('change', function (ev) {
+    var archivo = ev.target.files && ev.target.files[0];
+    ev.target.value = '';
+    if (!archivo) return;
+    var lector = new FileReader();
+    lector.onload = function () {
+      var d = null;
+      try { d = normalizar(JSON.parse(lector.result)); } catch (e) { d = null; }
+      if (!d) { toast('Ese archivo no es un respaldo válido', true); return; }
+      if (datos.materias.length &&
+          !confirm('Se reemplazarán tus ' + datos.materias.length + ' materia(s) actuales por las ' + d.materias.length + ' del archivo. ¿Continuar?')) return;
+      datos = d;
+      guardar();
+      renderTodo();
+      toast('Importadas ' + d.materias.length + ' materia(s)');
+    };
+    lector.onerror = function () { toast('No se pudo leer el archivo', true); };
+    lector.readAsText(archivo);
+  });
+
+  renderTodo();
+})();
+</script>
+</body>
+</html>
