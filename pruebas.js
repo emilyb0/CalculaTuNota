@@ -127,19 +127,26 @@ caso('9) Materia terminada', () => {
   igual('Necesaria (no aplica)', c.necesaria, null);
 });
 
-caso('10) Resumen del semestre ponderado por créditos', () => {
+caso('10) Resumen del semestre: nota actual = lo obtenido hasta ahora, ponderado por créditos', () => {
   const r = N.resumenSemestre([
-    { nombre: 'Cálculo', creditos: 4, calculo: N.calcularMateria([ev(30, 3.5), ev(30, 2.8), ev(40)], 3) },
-    { nombre: 'Física', creditos: 3, calculo: N.calcularMateria([ev(50, 4), ev(50, 4.4)], 3) },
-    { nombre: 'Ética', creditos: 2, calculo: N.calcularMateria([ev(100)], 4) }
+    { nombre: 'Cálculo', creditos: 4, calculo: N.calcularMateria([ev(30, 3.5), ev(30, 2.8), ev(40)]) },
+    { nombre: 'Física', creditos: 3, calculo: N.calcularMateria([ev(50, 4), ev(50, 4.4)]) },
+    { nombre: 'Ética', creditos: 2, calculo: N.calcularMateria([ev(100)]) }
   ]);
-  igual('Cálculo actual (1.89 sobre 60%)', f2(r.filas[0].actual), '3.15');
-  igual('Cálculo proyectada (meta 3.0)', f2(r.filas[0].proyectada), '3.09');
-  igual('Física final', f2(r.filas[1].actual), '4.20');
-  igual('Ética sin notas', r.filas[2].actual, null);
-  igual('Promedio actual (4 y 3 créditos)', f2(r.promedioActual), '3.60');
-  igual('Créditos con nota', r.creditosConNota, 7);
-  igual('Promedio proyectado (9 créditos)', f2(r.promedioProyectado), '3.66');
+  igual('Cálculo actual (acumulada)', f2(r.filas[0].actual), '1.89');
+  igual('Física actual (final)', f2(r.filas[1].actual), '4.20');
+  igual('Ética sin notas', f2(r.filas[2].actual), '0.00');
+  igual('Promedio (1.89×4 + 4.20×3 + 0×2) / 9', f2(r.promedio), '2.24');
+  igual('Créditos', r.creditosTotales, 9);
+});
+
+caso('10b) Meta fija 2.96 y color de la acumulada', () => {
+  const c = N.calcularMateria([ev(30, 3.5), ev(30, 2.8), ev(40)]);
+  igual('Meta usada por defecto', c.meta, 2.96);
+  igual('Necesaria para 2.96: (2.96 − 1.89) / 0.40', f2(c.necesaria), '2.68');
+  const e = N.calcularMateria([ev(15, 5), ev(10, 5), ev(20, 3.8), ev(20, 2.7), ev(25, 1.5), ev(10)]);
+  igual('Caso de la captura: acumulada', f2(e.acumulada), '2.93');
+  igual('Acumulada 2.93 → rojo', N.colorNotaFinal(e.acumulada), 'rojo');
 });
 
 caso('11) Créditos inscritos del semestre vs. créditos de las materias', () => {

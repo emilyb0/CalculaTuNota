@@ -5,295 +5,417 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CalculaTuNota</title>
 <meta name="description" content="Calcula tu nota acumulada, lo que necesitas en lo que falta y tu promedio del semestre. Escala 0.00 a 5.00.">
-<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#071327" media="(prefers-color-scheme: dark)">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230A1F3D'/%3E%3Cpath d='M9 21.5l5-5 3.5 3 5.5-8.5' stroke='white' stroke-width='2.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0F1F4D">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%278%27 fill=%27%230F1F4D%27/%3E%3Cg transform=%27translate(4 4)%27 fill=%27none%27 stroke=%27white%27 stroke-width=%271.9%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z%27/%3E%3Cpath d=%27M22 10v6%27/%3E%3Cpath d=%27M6 12.5V16a6 3 0 0 0 12 0v-3.5%27/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #FFFFFF;
-    --surface: #FFFFFF;
-    --soft: #F4F6F9;
-    --ink: #0A1F3D;
-    --muted: #5A6579;
-    --faint: #939BAC;
-    --line: #E6E9EF;
-    --line-strong: #D3D9E2;
-    --accent: #0A1F3D;
-    --accent-hover: #15335E;
-    --on-accent: #FFFFFF;
-    --ok: #17784A;
-    --warn: #A86500;
-    --bad: #C1352B;
-    --radius: 12px;
-    --mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    /* Paleta */
+    --azul-profundo: #0F1F4D;
+    --azul: #1E3A8A;
+    --azul-brillante: #2F5BEA;
+    --azul-claro: #EEF2FB;
+    --blanco: #FFFFFF;
+    --texto: #0F172A;
+    --texto-2: #64748B;
+    --texto-2-fondo: #55657D;      /* texto secundario sobre azul claro (AA) */
+    --texto-cabecera: #B9C3DE;     /* texto secundario sobre azul profundo */
+    --fondo: #F6F8FC;
+    --linea: #E3E8F2;
+    --linea-fuerte: #CBD3E3;
+
+    /* Estados: color base (barras, puntos) y tono de texto con contraste AA */
+    --ok: #1F9D6B;   --ok-texto: #167A52;   --ok-suave: #E7F5EE;
+    --warn: #D99A1E; --warn-texto: #8A5B0A; --warn-suave: #FBF2DE;
+    --bad: #D1435B;  --bad-texto: #B5304A;  --bad-suave: #FBEAEE;
+
+    /* Tipografía */
+    --serif: "Fraunces", Georgia, "Times New Roman", serif;
+    --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    /* Espaciado, radios, sombras y movimiento */
+    --e1: 4px; --e2: 8px; --e3: 12px; --e4: 16px; --e5: 24px; --e6: 32px; --e7: 48px;
+    --radio-sm: 8px; --radio: 12px; --radio-lg: 16px;
+    --sombra: 0 1px 2px rgba(15, 31, 77, .04), 0 8px 24px -12px rgba(15, 31, 77, .14);
+    --sombra-alta: 0 24px 60px -20px rgba(15, 31, 77, .45);
+    --anillo: 0 0 0 3px rgba(47, 91, 234, .2);
+    --t: 180ms cubic-bezier(.2, .7, .3, 1);
     color-scheme: light;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #071327;
-      --surface: #0B1A33;
-      --soft: #10223F;
-      --ink: #F2F5FA;
-      --muted: #A6B0C3;
-      --faint: #6E7B93;
-      --line: #1A2C4A;
-      --line-strong: #273C60;
-      --accent: #FFFFFF;
-      --accent-hover: #E3E9F2;
-      --on-accent: #071327;
-      --ok: #4CC38A;
-      --warn: #F0B54A;
-      --bad: #FF7A6D;
-      color-scheme: dark;
-    }
   }
 
   *, *::before, *::after { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: var(--sans);
     font-size: 15px;
-    line-height: 1.5;
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
   h1, h2, p { margin: 0; }
   button, input { font: inherit; color: inherit; }
   button { cursor: pointer; }
   [hidden] { display: none !important; }
-  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--azul-brillante); outline-offset: 2px; border-radius: 4px; }
+  svg { flex: none; }
 
-  .contenedor { width: 100%; max-width: 820px; margin: 0 auto; padding: 0 16px; }
+  .contenedor { width: 100%; max-width: 860px; margin: 0 auto; padding: 0 var(--e4); }
 
-  /* Colores de estado */
-  [data-nivel="verde"] { --n: var(--ok); }
-  [data-nivel="amarillo"] { --n: var(--warn); }
-  [data-nivel="rojo"] { --n: var(--bad); }
-  .nota-color[data-nivel]:not([data-nivel=""]) { color: var(--n); }
-  .no-cuadra { color: var(--bad) !important; }
+  /* Estados de nota */
+  [data-nivel="verde"]    { --n: var(--ok);   --n-texto: var(--ok-texto);   --n-suave: var(--ok-suave); }
+  [data-nivel="amarillo"] { --n: var(--warn); --n-texto: var(--warn-texto); --n-suave: var(--warn-suave); }
+  [data-nivel="rojo"]     { --n: var(--bad);  --n-texto: var(--bad-texto);  --n-suave: var(--bad-suave); }
+  .nota-color[data-nivel]:not([data-nivel=""]) { color: var(--n-texto); }
+  .no-cuadra { color: var(--bad-texto) !important; }
 
-  /* ---------- Barra superior ---------- */
-  .barra { border-bottom: 1px solid var(--line); margin-bottom: 32px; }
-  .barra-in { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; padding-top: 18px; padding-bottom: 18px; }
-  .marca { display: flex; align-items: center; gap: 11px; }
-  .logo { width: 30px; height: 30px; flex: none; }
-  .logo rect { fill: var(--accent); }
-  .logo path { stroke: var(--on-accent); }
-  h1 { font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
-  .lema { font-size: .75rem; color: var(--muted); }
-  .acciones { display: flex; align-items: center; gap: 8px; }
+  /* Cuadrícula de cuaderno (encabezado y login) */
+  .cuadricula {
+    background-color: var(--azul-profundo);
+    background-image:
+      radial-gradient(120% 140% at 100% 0%, rgba(47, 91, 234, .32), transparent 55%),
+      linear-gradient(rgba(255, 255, 255, .05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, .05) 1px, transparent 1px);
+    background-size: auto, 22px 22px, 22px 22px;
+    color: var(--blanco);
+  }
 
+  /* ---------- Encabezado ---------- */
+  .barra { padding: var(--e5) 0 var(--e6); margin-bottom: var(--e6); }
+  .barra-top { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); flex-wrap: wrap; }
+  .marca { display: flex; align-items: center; gap: var(--e3); margin-right: auto; }
+  .logo { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .16); }
+  .logo svg { width: 22px; height: 22px; }
+  h1 { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.2; }
+  .lema { font-size: .78rem; color: var(--texto-cabecera); }
+
+  .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--e5); flex-wrap: wrap; margin-top: var(--e6); }
+  .hero-prom { display: grid; gap: var(--e1); }
+  .hero-etq { font-size: .72rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--texto-cabecera); }
+  .hero-val { font-family: var(--serif); font-size: clamp(3.2rem, 11vw, 4.5rem); font-weight: 500; line-height: 1; letter-spacing: -.02em; font-variant-numeric: lining-nums tabular-nums; }
+  .acciones { display: flex; align-items: center; gap: var(--e2); }
+
+  /* ---------- Botones ---------- */
   .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    height: 34px; padding: 0 13px;
-    border: 1px solid var(--line-strong); border-radius: 8px;
-    background: transparent; font-size: .84rem; font-weight: 600;
-    transition: border-color .15s, background .15s;
+    display: inline-flex; align-items: center; justify-content: center; gap: var(--e2);
+    height: 38px; padding: 0 var(--e4);
+    border: 1px solid var(--linea-fuerte); border-radius: 10px;
+    background: var(--blanco); color: var(--azul);
+    font-size: .875rem; font-weight: 600; white-space: nowrap;
+    transition: background var(--t), border-color var(--t), color var(--t), box-shadow var(--t), transform var(--t);
   }
-  .btn:hover { border-color: var(--ink); }
-  .btn svg { width: 15px; height: 15px; }
-  .btn-primario { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-  .btn-primario:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn:hover { border-color: var(--azul-brillante); color: var(--azul-brillante); }
+  .btn:active { transform: translateY(1px); }
+  .btn svg { width: 17px; height: 17px; }
+  .btn-primario { background: var(--azul); border-color: var(--azul); color: var(--blanco); box-shadow: 0 6px 16px -8px rgba(30, 58, 138, .6); }
+  .btn-primario:hover { background: var(--azul-brillante); border-color: var(--azul-brillante); color: var(--blanco); }
+  .btn-claro { background: rgba(255, 255, 255, .05); border-color: rgba(255, 255, 255, .28); color: var(--blanco); }
+  .btn-claro:hover { background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .5); color: var(--blanco); }
+  .btn-blanco { background: var(--blanco); border-color: var(--blanco); color: var(--azul); }
+  .btn-blanco:hover { background: var(--azul-claro); border-color: var(--azul-claro); color: var(--azul); }
+  .barra :focus-visible, .login-panel :focus-visible { outline-color: var(--blanco); }
 
-  /* ---------- Estructura ---------- */
-  main { display: grid; gap: 40px; padding-bottom: 24px; }
-  .tarjeta { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-  h2 { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
-  .etq { font-size: .72rem; color: var(--muted); font-weight: 500; }
-  .alerta { color: var(--bad); font-size: .85rem; font-weight: 500; }
-
-  /* ---------- Resumen del semestre ---------- */
-  .resumen { padding: 22px 22px 18px; display: grid; gap: 22px; }
-  .res-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .kpi { display: grid; align-content: start; gap: 2px; padding: 0 18px; border-left: 1px solid var(--line); }
-  .kpi:first-child { padding-left: 0; border-left: 0; }
-  .kpi-val { font-family: var(--mono); font-size: 1.85rem; font-weight: 500; letter-spacing: -.04em; line-height: 1.25; }
-  .kpi-val small { font-size: .6em; opacity: .75; letter-spacing: 0; }
-  .kpi-sub { font-size: .72rem; color: var(--faint); }
-
-  .tabla-scroll { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  th { text-align: left; font-size: .68rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); padding: 0 8px 8px; border-bottom: 1px solid var(--line); }
-  td { padding: 11px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  tbody tr:last-child td { border-bottom: 0; }
-  tfoot td { border-top: 1px solid var(--ink); border-bottom: 0; font-weight: 700; }
-  th:first-child, td:first-child { padding-left: 0; }
-  th:last-child, td:last-child { padding-right: 0; }
-  .num { text-align: right; white-space: nowrap; font-family: var(--mono); }
-  th.num { font-family: inherit; }
-  .t-nombre { font-weight: 600; overflow-wrap: anywhere; }
-  .t-sub { display: block; font-size: .72rem; color: var(--faint); font-weight: 500; }
-  .nota-pie { font-size: .72rem; color: var(--faint); }
-
-  /* ---------- Materias ---------- */
-  .sec-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
-  .materias { display: grid; gap: 16px; }
-
-  .vacio { text-align: center; padding: 40px 20px; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--muted); display: grid; gap: 8px; justify-items: center; }
-  .vacio-titulo { font-weight: 700; color: var(--ink); }
-  .vacio p:not(.vacio-titulo) { max-width: 420px; font-size: .9rem; margin-bottom: 6px; }
-
-  .materia { padding: 16px 22px 20px; }
-
-  .m-top { display: flex; align-items: center; gap: 2px; }
-  .m-nombre {
-    flex: 1; min-width: 0; height: 38px; margin-left: -8px; padding: 0 8px;
-    border: 1px solid transparent; border-radius: 8px; background: transparent;
-    font-size: 1.05rem; font-weight: 700; letter-spacing: -.015em;
+  .icono {
+    display: grid; place-items: center; width: 34px; height: 34px; padding: 0;
+    border: 0; border-radius: var(--radio-sm); background: none; color: var(--texto-2);
+    transition: background var(--t), color var(--t);
   }
-  .m-nombre:hover { border-color: var(--line); }
-  .m-nombre:focus { border-color: var(--ink); outline: none; }
-
-  .icono { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: none; color: var(--faint); }
-  .icono:hover { background: var(--soft); color: var(--ink); }
-  .icono.peligro:hover { color: var(--bad); }
-  .icono svg { width: 16px; height: 16px; transition: transform .2s; }
+  .icono:hover { background: var(--azul-claro); color: var(--azul); }
+  .icono.peligro:hover { background: var(--bad-suave); color: var(--bad-texto); }
+  .icono svg { width: 17px; height: 17px; transition: transform var(--t); }
   [data-accion="plegar"][aria-expanded="false"] svg { transform: rotate(-90deg); }
 
-  .m-ajustes { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 6px 0 0; }
-  .mini { display: inline-flex; align-items: center; gap: 8px; }
-  .mini input { width: 60px; }
+  /* ---------- Cuenta / sincronización ---------- */
+  .cuenta { display: flex; align-items: center; }
+  .sesion { display: flex; align-items: center; gap: var(--e3); }
+  .sync-estado { display: inline-flex; align-items: center; gap: 7px; font-size: .8rem; font-weight: 500; color: #DCE3F5; white-space: nowrap; }
+  .sync-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--texto-cabecera); transition: background var(--t); }
+  .sync-estado[data-estado="ok"]::before { background: #4FD39B; }
+  .sync-estado[data-estado="guardando"]::before,
+  .sync-estado[data-estado="sincronizando"]::before { background: #F2C14E; }
+  .sync-estado[data-estado="error"]::before { background: #FF8A9B; }
 
-  .chip { display: inline-flex; align-items: center; gap: 7px; font-size: .78rem; font-weight: 700; white-space: nowrap; color: var(--n, var(--faint)); }
-  .chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .m-ajustes .chip { margin-left: auto; }
+  /* ---------- Estructura ---------- */
+  main { display: grid; gap: var(--e7); padding-bottom: var(--e6); }
+  .tarjeta { background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--radio-lg); box-shadow: var(--sombra); }
+  h2 { font-family: var(--serif); font-size: 1.4rem; font-weight: 600; color: var(--azul-profundo); letter-spacing: -.01em; }
+  .etq { font-size: .75rem; font-weight: 500; color: var(--texto-2); }
+  .alerta { color: var(--bad-texto); font-size: .875rem; font-weight: 500; }
 
   .campo {
-    height: 38px; width: 100%; padding: 0 10px;
-    border: 1px solid var(--line-strong); border-radius: 8px;
-    background: var(--surface); font-size: 16px; /* 16px evita el zoom en iPhone */
-    transition: border-color .15s, box-shadow .15s;
+    height: 40px; width: 100%; padding: 0 var(--e3);
+    border: 1px solid var(--linea-fuerte); border-radius: var(--radio-sm);
+    background: var(--blanco); color: var(--texto);
+    font-size: 16px; /* 16px evita el zoom en iPhone */
+    font-variant-numeric: tabular-nums;
+    transition: border-color var(--t), box-shadow var(--t), background var(--t);
   }
-  .campo::placeholder { color: var(--faint); }
-  .campo:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
-  .campo.centro { text-align: center; font-family: var(--mono); }
-  .campo.invalido { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad); color: var(--bad); }
-  .campo:disabled { opacity: .45; }
+  .campo::placeholder { color: #94A3B8; }
+  .campo:hover { border-color: #AEB9CF; }
+  .campo:focus { outline: none; border-color: var(--azul-brillante); box-shadow: var(--anillo); background: var(--blanco); }
+  .campo.centro { text-align: center; }
+  .campo.invalido { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(209, 67, 91, .15); color: var(--bad-texto); }
+  .campo:disabled { opacity: .5; }
+  .mini { display: inline-flex; align-items: center; gap: var(--e2); }
+  .mini input { width: 64px; }
 
-  .m-cuerpo { display: grid; gap: 18px; margin-top: 18px; }
+  /* ---------- Resumen del semestre ---------- */
+  .resumen { padding: var(--e5); display: grid; gap: var(--e5); }
+  .res-cab { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--e4); flex-wrap: wrap; }
+  .res-creditos { display: flex; align-items: baseline; gap: var(--e2); flex-wrap: wrap; margin-top: var(--e1); }
+  .kpi-val { font-family: var(--serif); font-size: 1.6rem; font-weight: 600; color: var(--azul); line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; transition: color var(--t); }
+  .kpi-val small { font-size: .65em; font-weight: 500; opacity: .8; }
+  .kpi-sub { font-size: .8rem; color: var(--texto-2); }
 
-  .evals { display: grid; gap: 6px; }
-  .ev-grid { display: grid; grid-template-columns: minmax(0, 1fr) 4.6rem 4.6rem 32px; gap: 8px; align-items: center; }
-  .ev-cab span { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); font-weight: 600; }
+  .tabla-scroll { overflow-x: auto; border: 1px solid var(--linea); border-radius: var(--radio); }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th { text-align: left; font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-2-fondo); padding: 10px var(--e4); background: var(--azul-claro); }
+  td { padding: var(--e3) var(--e4); border-top: 1px solid var(--linea); vertical-align: top; }
+  tbody tr { transition: background var(--t); }
+  tbody tr:hover { background: #FAFBFE; }
+  tfoot td { border-top: 1px solid var(--azul); font-weight: 600; color: var(--azul-profundo); }
+  .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  td.num { font-weight: 600; }
+  .t-nombre { font-weight: 600; color: var(--texto); overflow-wrap: anywhere; }
+  .t-sub { display: block; font-size: .75rem; font-weight: 400; color: var(--texto-2); }
+
+  /* ---------- Materias ---------- */
+  .sec-cab { display: flex; align-items: center; justify-content: space-between; gap: var(--e3); margin-bottom: var(--e4); }
+  .materias { display: grid; gap: var(--e5); }
+
+  .vacio {
+    display: grid; justify-items: center; gap: var(--e3); text-align: center;
+    padding: var(--e7) var(--e5);
+    background: var(--blanco); border: 1px dashed var(--linea-fuerte); border-radius: var(--radio-lg);
+  }
+  .vacio-icono { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: var(--azul-claro); color: var(--azul); margin-bottom: var(--e1); }
+  .vacio-icono svg { width: 26px; height: 26px; }
+  .vacio-titulo { font-family: var(--serif); font-size: 1.4rem; font-weight: 600; color: var(--azul-profundo); }
+  .vacio-texto { max-width: 400px; color: var(--texto-2); font-size: .92rem; }
+  .vacio-acciones { display: flex; gap: var(--e2); flex-wrap: wrap; justify-content: center; margin-top: var(--e2); }
+
+  .materia { position: relative; padding: var(--e5) var(--e5) var(--e5); overflow: hidden; }
+  .materia::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--azul), var(--azul-brillante)); }
+
+  .m-top { display: flex; align-items: center; gap: var(--e1); }
+  .m-nombre {
+    flex: 1; min-width: 0; height: 42px; margin-left: -10px; padding: 0 10px;
+    border: 1px solid transparent; border-radius: var(--radio-sm); background: transparent;
+    font-family: var(--serif); font-size: 1.35rem; font-weight: 600; color: var(--azul-profundo); letter-spacing: -.01em;
+    transition: border-color var(--t), box-shadow var(--t);
+  }
+  .m-nombre:hover { border-color: var(--linea); }
+  .m-nombre:focus { outline: none; border-color: var(--azul-brillante); box-shadow: var(--anillo); }
+
+  .m-ajustes { display: flex; align-items: center; gap: var(--e3) var(--e5); flex-wrap: wrap; margin-top: var(--e2); }
+  .progreso-caja { display: flex; align-items: center; gap: var(--e3); flex: 1 1 200px; max-width: 340px; }
+  .progreso { flex: 1; height: 6px; border-radius: 999px; background: var(--azul-claro); overflow: hidden; }
+  .progreso-barra { height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--azul), var(--azul-brillante)); transition: width 300ms cubic-bezier(.2, .7, .3, 1); }
+  .evaluado { font-size: .8rem; font-weight: 500; color: var(--texto-2); white-space: nowrap; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 12px;
+    border-radius: 999px; background: var(--n-suave, var(--azul-claro)); color: var(--n-texto, var(--azul));
+    font-size: .78rem; font-weight: 600; white-space: nowrap;
+    transition: background var(--t), color var(--t);
+  }
+  .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--n, var(--azul-brillante)); }
+  .m-ajustes .chip { margin-left: auto; }
+
+  .m-cuerpo { display: grid; gap: var(--e5); margin-top: var(--e5); }
+
+  /* Evaluaciones como tabla limpia */
+  .evals { border: 1px solid var(--linea); border-radius: var(--radio); overflow: hidden; }
+  .ev-grid { display: grid; grid-template-columns: minmax(0, 1fr) 5rem 5rem 36px; gap: var(--e2); align-items: center; }
+  .ev-cab { padding: 9px var(--e3) 9px calc(var(--e2) + var(--e3)); background: var(--azul-claro); }
+  .ev-cab span { font-size: .7rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--texto-2-fondo); }
   .ev-cab span:nth-child(2), .ev-cab span:nth-child(3) { text-align: center; }
-  .ev-total { font-size: .8rem; color: var(--muted); padding: 2px 0; }
-  .ev-total .tot-pct { text-align: center; font-family: var(--mono); font-weight: 500; }
-  .ev-total .tot-falta { font-weight: 600; }
+  .ev-fila { padding: var(--e1) var(--e2); border-top: 1px solid var(--linea); transition: background var(--t); }
+  .ev-fila:hover { background: #FAFBFE; }
+  .ev-fila .campo { border-color: transparent; background: transparent; }
+  .ev-fila .campo:hover { border-color: var(--linea-fuerte); background: var(--blanco); }
+  .ev-fila .campo:focus { border-color: var(--azul-brillante); background: var(--blanco); }
+  .ev-fila .campo.invalido { border-color: var(--bad); background: var(--bad-suave); }
 
-  .btn-texto { justify-self: start; border: 0; background: none; padding: 4px 0; color: var(--ink); font-size: .84rem; font-weight: 700; }
-  .btn-texto:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .btn-texto {
+    display: flex; align-items: center; gap: var(--e2); width: 100%;
+    padding: var(--e3) var(--e4); border: 0; border-top: 1px solid var(--linea); background: none;
+    color: var(--azul); font-size: .875rem; font-weight: 600; text-align: left;
+    transition: background var(--t), color var(--t);
+  }
+  .btn-texto:hover { background: var(--azul-claro); color: var(--azul-brillante); }
+  .btn-texto svg { width: 16px; height: 16px; }
 
-  .errores { margin: 0; padding-left: 18px; color: var(--bad); font-size: .82rem; }
+  .errores { margin: 0; padding-left: 20px; color: var(--bad-texto); font-size: .85rem; }
 
-  .metricas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-  .metrica { display: grid; gap: 1px; padding: 0 16px; border-left: 1px solid var(--line); }
-  .metrica:first-child { padding-left: 0; border-left: 0; }
-  .metrica .val { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; letter-spacing: -.03em; line-height: 2.1rem; }
-  .metrica.destacada .val { color: var(--n, var(--ink)); }
-  .metrica .val.texto { font-family: inherit; font-size: 1rem; font-weight: 700; letter-spacing: 0; }
+  .metricas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e3); }
+  .metrica { display: grid; gap: 2px; padding: var(--e4) var(--e4) var(--e3); border-radius: var(--radio); background: var(--azul-claro); }
+  .metrica .etq { color: var(--texto-2-fondo); font-weight: 600; letter-spacing: .04em; }
+  .metrica .val { font-family: var(--serif); font-size: 2.1rem; font-weight: 600; line-height: 1.15; color: var(--azul); letter-spacing: -.01em; font-variant-numeric: lining-nums tabular-nums; transition: color var(--t); }
+  .metrica.destacada { background: var(--n-suave, var(--azul-claro)); transition: background var(--t); }
+  .metrica.destacada .val { color: var(--n-texto, var(--azul)); }
+  .metrica .val.texto { font-family: var(--sans); font-size: 1.15rem; line-height: 2.4rem; letter-spacing: 0; }
 
-  .mensajes { display: grid; gap: 3px; }
-  .mensaje { font-size: .9rem; }
-  .mensaje b { font-weight: 800; }
-  .mensaje.sec { font-size: .8rem; color: var(--muted); }
+  .mensajes { display: grid; gap: var(--e1); }
+  .mensaje { font-size: .92rem; color: var(--texto); }
+  .mensaje b { font-weight: 700; color: var(--azul); }
 
   .simulador {
-    display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px;
-    padding-top: 16px; border-top: 1px solid var(--line); font-size: .88rem; color: var(--muted);
+    display: flex; align-items: center; flex-wrap: wrap; gap: var(--e2) var(--e3);
+    padding: var(--e3) var(--e4); border: 1px dashed var(--linea-fuerte); border-radius: var(--radio);
+    font-size: .9rem; color: var(--texto-2);
   }
-  .simulador .campo { width: 72px; }
-  .sim-res { font-family: var(--mono); font-size: 1.2rem; font-weight: 500; color: var(--ink); }
+  .simulador .campo { width: 76px; }
+  .sim-res { font-family: var(--serif); font-size: 1.5rem; font-weight: 600; color: var(--azul); font-variant-numeric: lining-nums tabular-nums; transition: color var(--t); }
 
-  .pie { padding: 8px 16px 40px; font-size: .74rem; color: var(--faint); text-align: center; }
+  /* Animación suave al cambiar un resultado */
+  @keyframes pulso { from { opacity: .25; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .pulso { display: inline-block; animation: pulso 200ms ease-out; }
+
+  .pie { padding: var(--e2) var(--e4) var(--e7); font-size: .78rem; color: var(--texto-2); text-align: center; }
 
   .toast {
-    position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 20px); opacity: 0;
-    padding: 10px 16px; border-radius: 8px; background: var(--ink); color: var(--bg);
-    font-size: .85rem; font-weight: 600; pointer-events: none; transition: opacity .2s, transform .2s;
-    max-width: calc(100% - 32px);
+    position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 16px); opacity: 0;
+    padding: 12px 18px; border-radius: var(--radio); background: var(--azul-profundo); color: var(--blanco);
+    font-size: .875rem; font-weight: 500; box-shadow: var(--sombra-alta); pointer-events: none;
+    transition: opacity var(--t), transform var(--t); max-width: calc(100% - 32px);
   }
   .toast.visible { opacity: 1; transform: translate(-50%, 0); }
-  .toast.error { background: var(--bad); color: #fff; }
+  .toast.error { background: var(--bad-texto); }
 
-  /* ---------- Cuenta y sincronización ---------- */
-  .marca { margin-right: auto; }
-  .acciones { order: 1; }
-  .cuenta { order: 2; }
-  .sesion { display: flex; align-items: center; gap: 10px; }
-  .sync-estado { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
-  .sync-estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
-  .sync-estado[data-estado="ok"]::before { background: var(--ok); }
-  .sync-estado[data-estado="guardando"]::before,
-  .sync-estado[data-estado="sincronizando"]::before { background: var(--warn); }
-  .sync-estado[data-estado="error"]::before { background: var(--bad); }
-
+  /* ---------- Diálogos ---------- */
+  dialog { color: var(--texto); }
+  dialog::backdrop { background: rgba(15, 31, 77, .55); backdrop-filter: blur(2px); }
   .dialogo {
-    width: calc(100% - 32px); max-width: 420px; padding: 22px;
-    border: 1px solid var(--line); border-radius: var(--radius);
-    background: var(--surface); color: var(--ink);
+    width: calc(100% - 32px); max-width: 440px; padding: var(--e5);
+    border: 0; border-radius: var(--radio-lg); background: var(--blanco); box-shadow: var(--sombra-alta);
   }
-  .dialogo::backdrop { background: rgba(7, 19, 39, .5); }
-  .dlg-titulo { font-size: 1.05rem; font-weight: 800; margin-bottom: 8px; }
-  .dlg-texto { font-size: .9rem; color: var(--muted); margin-bottom: 20px; }
-  .dlg-opciones { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .dlg-titulo { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; color: var(--azul-profundo); margin-bottom: var(--e2); }
+  .dlg-texto { font-size: .92rem; color: var(--texto-2); margin-bottom: var(--e5); }
+  .dlg-opciones { display: flex; gap: var(--e2); flex-wrap: wrap; justify-content: flex-end; }
 
-  @media (max-width: 600px) {
+  /* Login: panel azul con cuadrícula + formulario blanco */
+  .login {
+    width: calc(100% - 32px); max-width: 780px; max-height: calc(100% - 32px); padding: 0; overflow: auto;
+    border: 0; border-radius: 20px; background: var(--blanco); box-shadow: var(--sombra-alta);
+  }
+  .login[open] { display: grid; grid-template-columns: 1fr 1.1fr; }
+  .login-panel { display: flex; flex-direction: column; justify-content: space-between; gap: var(--e7); padding: 40px var(--e6); min-height: 380px; }
+  .login-panel .logo { width: 44px; height: 44px; }
+  .login-frase { font-family: var(--serif); font-size: 2rem; font-weight: 500; line-height: 1.15; letter-spacing: -.01em; }
+  .login-sub { margin-top: var(--e3); font-size: .92rem; color: var(--texto-cabecera); }
+  .login-form { position: relative; display: flex; flex-direction: column; justify-content: center; gap: var(--e4); padding: 40px var(--e6); }
+  .login-form h2 { font-size: 1.6rem; }
+  .login-form p { color: var(--texto-2); font-size: .92rem; }
+  .login-cerrar { position: absolute; top: var(--e3); right: var(--e3); }
+  .btn-google { height: 48px; width: 100%; color: var(--texto); font-size: .95rem; margin-top: var(--e2); }
+  .btn-google:hover { color: var(--texto); border-color: var(--azul-brillante); box-shadow: var(--anillo); }
+  .btn-google svg { width: 18px; height: 18px; }
+  .login-nota { font-size: .8rem !important; }
+
+  /* ---------- Celular ---------- */
+  @media (max-width: 640px) {
     body { font-size: 14.5px; }
-    .barra { margin-bottom: 24px; }
-    .barra-in { padding-top: 14px; padding-bottom: 14px; }
-    .cuenta { order: 1; }
-    .acciones { order: 2; width: 100%; }
-    .acciones .btn { flex: 1; justify-content: center; }
-    main { gap: 32px; }
-    .resumen { padding: 18px 16px 14px; }
-    .kpi { padding: 0 10px; }
-    .kpi-val { font-size: 1.35rem; }
-    .materia { padding: 14px 16px 18px; }
-    .metricas { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
-    .metrica:nth-child(odd) { padding-left: 0; border-left: 0; }
-    .ev-grid { grid-template-columns: minmax(0, 1fr) 3.9rem 3.9rem 28px; gap: 6px; }
-    .icono { width: 28px; height: 28px; }
+    .barra { padding: var(--e4) 0 var(--e5); margin-bottom: var(--e5); }
+    .hero { margin-top: var(--e5); }
+    .acciones { width: 100%; }
+    .acciones .btn { flex: 1; }
+    main { gap: var(--e6); }
+    .resumen { padding: var(--e5) var(--e4); }
+    th, td { padding-left: var(--e3); padding-right: var(--e3); }
+    .materia { padding: var(--e5) var(--e4) var(--e4); }
     .m-ajustes .chip { margin-left: 0; }
+    .progreso-caja { max-width: none; }
+    .ev-grid { grid-template-columns: minmax(0, 1fr) 3.9rem 3.9rem 30px; gap: var(--e1); }
+    .ev-cab { padding-left: calc(var(--e1) + var(--e3)); padding-right: var(--e1); }
+    .ev-fila { padding: var(--e1); }
+    .ev-fila .campo { padding: 0 var(--e2); }
+    .icono { width: 30px; height: 30px; }
+    .metrica .val { font-size: 1.75rem; }
+    .login[open] { grid-template-columns: 1fr; }
+    .login-panel { min-height: 0; gap: var(--e4); padding: var(--e6) var(--e5) var(--e5); }
+    .login-frase { font-size: 1.6rem; }
+    .login-form { padding: var(--e5); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0ms !important; animation: none !important; }
   }
 </style>
 </head>
 <body>
 
-<header class="barra">
-  <div class="contenedor barra-in">
-    <div class="marca">
-      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9"/><path d="M9 21.5l5-5 3.5 3 5.5-8.5" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div>
-        <h1>CalculaTuNota</h1>
-        <p class="lema">Escala 0.00 – 5.00 · Se aprueba con 2.95</p>
+<header class="barra cuadricula">
+  <div class="contenedor">
+    <div class="barra-top">
+      <div class="marca">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+        </span>
+        <div>
+          <h1>CalculaTuNota</h1>
+          <p class="lema">Escala 0.00 – 5.00 · Se aprueba con 2.95</p>
+        </div>
+      </div>
+      <div class="cuenta" id="cuenta" hidden>
+        <button type="button" class="btn btn-blanco" id="btn-entrar" title="Inicia sesión para ver tus datos en todos tus dispositivos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>Sincronizar
+        </button>
+        <div class="sesion" id="sesion" hidden>
+          <span class="sync-estado" id="sync-estado" role="status"></span>
+          <button type="button" class="btn btn-claro" id="btn-salir">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>Salir
+          </button>
+        </div>
       </div>
     </div>
-    <div class="acciones">
-      <button type="button" class="btn" id="btn-exportar" title="Descargar tus datos en JSON">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg>Exportar
-      </button>
-      <button type="button" class="btn" id="btn-importar" title="Cargar datos desde un JSON">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4m0 0L8 8m4-4l4 4M5 19h14"/></svg>Importar
-      </button>
-      <input type="file" id="archivo" accept="application/json,.json" hidden>
-    </div>
-    <div class="cuenta" id="cuenta" hidden>
-      <button type="button" class="btn btn-primario" id="btn-entrar" title="Inicia sesión con Google para ver tus datos en todos tus dispositivos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4.5 4.5 0 01-.6-8.96A6 6 0 0118 8.5a4 4 0 01-.5 9.5H7z"/></svg>Sincronizar
-      </button>
-      <div class="sesion" id="sesion" hidden>
-        <span class="sync-estado" id="sync-estado" role="status"></span>
-        <button type="button" class="btn" id="btn-salir">Salir</button>
+
+    <div class="hero">
+      <div class="hero-prom">
+        <span class="hero-etq">Promedio del semestre</span>
+        <span class="hero-val" id="prom-actual">—</span>
+      </div>
+      <div class="acciones">
+        <button type="button" class="btn btn-claro" id="btn-exportar" title="Descargar tus datos en JSON">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Exportar
+        </button>
+        <button type="button" class="btn btn-claro" id="btn-importar" title="Cargar datos desde un JSON">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Importar
+        </button>
+        <input type="file" id="archivo" accept="application/json,.json" hidden>
       </div>
     </div>
   </div>
 </header>
+
+<!-- Login: panel azul con cuadrícula + formulario blanco (en celular se apilan) -->
+<dialog class="login" id="dlg-login" aria-labelledby="login-titulo">
+  <div class="login-panel cuadricula">
+    <span class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.42 10.92a1 1 0 0 0-.02-1.84L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>
+    </span>
+    <div>
+      <p class="login-frase">Tus notas, en cada aula y en cada pantalla.</p>
+      <p class="login-sub">Sincroniza tus materias entre el computador y el celular.</p>
+    </div>
+  </div>
+  <div class="login-form">
+    <button type="button" class="icono login-cerrar" id="login-cerrar" aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <h2 id="login-titulo">Inicia sesión</h2>
+    <p>Usa tu cuenta de Google para guardar tus notas en la nube y verlas en todos tus dispositivos.</p>
+    <button type="button" class="btn btn-google" id="login-google" autofocus>
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continuar con Google
+    </button>
+    <p class="login-nota">Solo tú puedes ver tus datos. Sin iniciar sesión, la app funciona igual en este navegador.</p>
+  </div>
+</dialog>
 
 <dialog class="dialogo" id="dlg-conflicto" aria-labelledby="dlg-titulo">
   <p class="dlg-titulo" id="dlg-titulo">¿Qué datos quieres conservar?</p>
@@ -318,49 +440,48 @@
 
   <section id="resumen" class="tarjeta resumen" aria-labelledby="t-resumen" hidden>
     <div class="res-cab">
-      <h2 id="t-resumen">Semestre</h2>
+      <div>
+        <h2 id="t-resumen">Semestre</h2>
+        <div class="res-creditos">
+          <span class="kpi-val" id="creditos-total">0</span>
+          <span class="kpi-sub">créditos</span>
+          <span class="kpi-sub" id="materias-total"></span>
+        </div>
+      </div>
       <label class="mini"><span class="etq">Créditos inscritos</span><input class="campo centro" id="creditos-inscritos" inputmode="numeric" placeholder="18" autocomplete="off"></label>
-    </div>
-    <div class="kpis">
-      <div class="kpi">
-        <span class="etq">Promedio actual</span>
-        <span class="kpi-val" id="prom-actual">—</span>
-        <span class="kpi-sub" id="prom-actual-sub"></span>
-      </div>
-      <div class="kpi">
-        <span class="etq">Proyectado</span>
-        <span class="kpi-val" id="prom-proy">—</span>
-        <span class="kpi-sub">Sacando tu meta en lo pendiente</span>
-      </div>
-      <div class="kpi">
-        <span class="etq">Créditos</span>
-        <span class="kpi-val" id="creditos-total">0</span>
-        <span class="kpi-sub" id="materias-total"></span>
-      </div>
     </div>
     <div class="tabla-scroll">
       <table>
         <thead>
-          <tr><th>Materia</th><th class="num">Créd.</th><th class="num">Actual</th><th class="num">Proyectada</th></tr>
+          <tr><th>Materia</th><th class="num">Créd.</th><th class="num">Actual</th></tr>
         </thead>
         <tbody id="resumen-filas"></tbody>
         <tfoot>
-          <tr><td>Promedio ponderado</td><td class="num" id="pie-creditos"></td><td class="num nota-color" id="pie-actual"></td><td class="num nota-color" id="pie-proy"></td></tr>
+          <tr><td>Promedio ponderado</td><td class="num" id="pie-creditos"></td><td class="num nota-color" id="pie-actual"></td></tr>
         </tfoot>
       </table>
     </div>
-    <p class="nota-pie">En materias en curso, “Actual” es tu promedio sobre lo ya evaluado; al terminar, es la nota final. “Proyectada” supone que sacas tu meta en todo lo pendiente.</p>
   </section>
 
   <section aria-labelledby="t-materias">
     <div class="sec-cab">
       <h2 id="t-materias">Materias</h2>
-      <button type="button" class="btn btn-primario" id="btn-agregar">+ Agregar materia</button>
+      <button type="button" class="btn btn-primario" id="btn-agregar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Agregar materia
+      </button>
     </div>
     <div id="vacio" class="vacio">
-      <p class="vacio-titulo">Aún no tienes materias</p>
-      <p>Agrega cada materia con sus evaluaciones y porcentajes. Todo se calcula y se guarda mientras escribes.</p>
-      <button type="button" class="btn" id="btn-ejemplo">Ver un ejemplo</button>
+      <span class="vacio-icono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      </span>
+      <p class="vacio-titulo">Empieza tu semestre</p>
+      <p class="vacio-texto">Agrega tu primera materia con sus evaluaciones y porcentajes. Todo se calcula y se guarda mientras escribes.</p>
+      <div class="vacio-acciones">
+        <button type="button" class="btn btn-primario" id="btn-agregar-vacio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Agregar mi primera materia
+        </button>
+        <button type="button" class="btn" id="btn-ejemplo">Ver un ejemplo</button>
+      </div>
     </div>
     <div id="materias" class="materias"></div>
   </section>
@@ -379,7 +500,7 @@
 
   var NOTA_MAX = 5;
   var APROBACION = 2.95; // 2.95 aprueba; 2.94 o menos reprueba
-  var META_DEFECTO = 3;
+  var META = 2.96;       // nota objetivo fija para calcular cuánto necesitas
 
   /** Quita el ruido de punto flotante (0.1 + 0.2 -> 0.3). */
   function limpiar(x) {
@@ -468,7 +589,7 @@
    * cuenta como pendiente.
    */
   function calcularMateria(evaluaciones, meta) {
-    meta = esNotaValida(meta) ? meta : META_DEFECTO;
+    meta = esNotaValida(meta) ? meta : META;
     var total = 0, evaluado = 0, acumulada = 0;
 
     (evaluaciones || []).forEach(function (e) {
@@ -502,44 +623,36 @@
       necesaria: necesaria,
       estado: estado,
       notaMaxima: notaFinalSimulada(acumulada, restante, NOTA_MAX),
-      promedioEvaluado: evaluado > 0 ? limpiar(acumulada / (evaluado / 100)) : null,
       completa: restante === 0
     };
   }
 
   /**
    * materias: [{ nombre, creditos: number|null, calculo: resultado de calcularMateria }]
-   * - Actual: nota final si la materia terminó; si no, promedio sobre lo evaluado.
-   * - Proyectada: acumulada + meta × porcentaje restante.
+   * La nota actual de cada materia es la acumulada: lo obtenido hasta el momento
+   * (0.00 si aún no tiene notas). El promedio se pondera por créditos.
    */
   function resumenSemestre(materias) {
-    var sumaA = 0, credA = 0, sumaP = 0, credP = 0;
+    var suma = 0, creditos = 0;
     var filas = (materias || []).map(function (m) {
       var c = m.calculo;
       var cred = m.creditos;
       var credOk = typeof cred === 'number' && isFinite(cred) && cred > 0;
-      var actual = c.completa ? c.acumulada : c.promedioEvaluado;
-      var proyectada = notaFinalSimulada(c.acumulada, c.porcentajeRestante, Math.min(c.meta, NOTA_MAX));
-      if (credOk) {
-        if (actual !== null) { sumaA += actual * cred; credA += cred; }
-        sumaP += proyectada * cred; credP += cred;
-      }
+      if (credOk) { suma += c.acumulada * cred; creditos += cred; }
       return {
-        nombre: m.nombre, creditos: credOk ? cred : null, actual: actual, proyectada: proyectada,
+        nombre: m.nombre, creditos: credOk ? cred : null, actual: c.acumulada,
         completa: c.completa, porcentajeEvaluado: c.porcentajeEvaluado
       };
     });
     return {
       filas: filas,
-      promedioActual: credA ? limpiar(sumaA / credA) : null,
-      creditosConNota: limpiar(credA),
-      promedioProyectado: credP ? limpiar(sumaP / credP) : null,
-      creditosTotales: limpiar(credP)
+      promedio: creditos ? limpiar(suma / creditos) : null,
+      creditosTotales: limpiar(creditos)
     };
   }
 
   raiz.Nota = {
-    NOTA_MAX: NOTA_MAX, APROBACION: APROBACION, META_DEFECTO: META_DEFECTO,
+    NOTA_MAX: NOTA_MAX, APROBACION: APROBACION, META: META,
     limpiar: limpiar, redondear: redondear, formatear: formatear, parsearNumero: parsearNumero,
     esNotaValida: esNotaValida, esPorcentajeValido: esPorcentajeValido,
     notaNecesaria: notaNecesaria, notaFinalSimulada: notaFinalSimulada,
@@ -562,9 +675,11 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
 
   var ICONO = {
-    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
-    basura: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>',
-    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>'
+    // Íconos de línea estilo Lucide
+    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+    basura: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+    mas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>'
   };
 
   var contador = 0;
@@ -594,7 +709,6 @@
           id: idDe(m.id),
           nombre: texto(m.nombre, 60) || 'Materia',
           creditos: texto(m.creditos, 6),
-          meta: m.meta === undefined || m.meta === null ? '3.00' : texto(m.meta, 6),
           simulacion: texto(m.simulacion, 6),
           abierta: m.abierta !== false,
           evaluaciones: (Array.isArray(m.evaluaciones) ? m.evaluaciones : [])
@@ -622,7 +736,7 @@
       creditosSemestre: datos.creditosSemestre,
       materias: datos.materias.map(function (m) {
         return {
-          id: m.id, nombre: m.nombre, creditos: m.creditos, meta: m.meta, simulacion: m.simulacion, abierta: m.abierta,
+          id: m.id, nombre: m.nombre, creditos: m.creditos, simulacion: m.simulacion, abierta: m.abierta,
           evaluaciones: m.evaluaciones.map(function (e) { return { id: e.id, nombre: e.nombre, porcentaje: e.porcentaje, nota: e.nota }; })
         };
       })
@@ -651,15 +765,24 @@
   /* ---------- Formato ---------- */
   // Todas las notas se muestran con dos decimales (3.02, 2.78, 3.00…)
   function fmt(x) { return N.formatear(x, 2); }
+
+  /** Cambia el texto de un resultado con una transición suave (solo si cambió). */
+  function poner(el, txt) {
+    var antes = el.textContent;
+    if (antes === txt) return;
+    el.textContent = txt;
+    if (!antes) return;
+    el.classList.remove('pulso');
+    void el.offsetWidth; // reinicia la animación
+    el.classList.add('pulso');
+  }
   function pct(p) { return String(N.redondear(p, 2)) + '%'; }
-  var APROB_TXT = N.formatear(N.APROBACION, 2);
   function num(n) { return String(N.redondear(n, 2)); }
 
   /* ---------- Validación de campos ---------- */
   var REGLAS = {
     porcentaje: N.esPorcentajeValido,
     nota: N.esNotaValida,
-    meta: N.esNotaValida,
     simulacion: N.esNotaValida,
     creditos: function (v) { return v >= 0 && v <= 40; },
     inscritos: function (v) { return v >= 0 && v <= 60; }
@@ -677,8 +800,13 @@
   function calculoDe(m) {
     return N.calcularMateria(
       m.evaluaciones.map(function (e) { return { porcentaje: N.parsearNumero(e.porcentaje), nota: N.parsearNumero(e.nota) }; }),
-      N.parsearNumero(m.meta)
+      N.META
     );
+  }
+
+  /** Color de una nota: rojo < 2.95 · amarillo 2.95–2.99 · verde ≥ 3.00. Sin color si aún no hay notas. */
+  function nivelNota(n, hayNotas) {
+    return hayNotas ? N.colorNotaFinal(n) : '';
   }
 
   function nivelDe(c) {
@@ -707,24 +835,24 @@
       '</div>' +
       '<div class="m-ajustes">' +
         '<label class="mini"><span class="etq">Créditos</span><input class="campo centro" data-campo="creditos" value="' + esc(m.creditos) + '" inputmode="numeric" autocomplete="off"></label>' +
-        '<label class="mini"><span class="etq">Meta</span><input class="campo centro" data-campo="meta" value="' + esc(m.meta) + '" inputmode="decimal" placeholder="3.00" autocomplete="off"></label>' +
+        '<div class="progreso-caja">' +
+          '<div class="progreso" role="progressbar" aria-label="Porcentaje evaluado" aria-valuemin="0" aria-valuemax="100" data-out="progreso"><div class="progreso-barra" data-out="barra"></div></div>' +
+          '<span class="evaluado" data-out="evaluado"></span>' +
+        '</div>' +
         '<span class="chip" data-out="chip"></span>' +
       '</div>' +
       '<div class="m-cuerpo"' + (m.abierta ? '' : ' hidden') + '>' +
         '<div class="evals">' +
-          '<div class="ev-grid ev-cab" aria-hidden="true"><span>Evaluación</span><span>%</span><span>Nota</span><span></span></div>' +
+          '<div class="ev-grid ev-cab" aria-hidden="true"><span>Evaluación</span><span data-out="cab-pct">%</span><span>Nota</span><span></span></div>' +
           m.evaluaciones.map(htmlEval).join('') +
-          '<div class="ev-grid ev-total" data-out="total"><span>Total <span data-out="total-falta"></span></span><span class="tot-pct" data-out="total-pct"></span><span></span><span></span></div>' +
-          '<button type="button" class="btn-texto" data-accion="agregar-eval">+ Agregar evaluación</button>' +
+          '<button type="button" class="btn-texto" data-accion="agregar-eval">' + ICONO.mas + 'Agregar evaluación</button>' +
         '</div>' +
         '<ul class="errores" data-out="errores" hidden></ul>' +
         '<div class="metricas">' +
-          '<div class="metrica"><span class="etq">Acumulada</span><span class="val" data-out="acumulada"></span></div>' +
-          '<div class="metrica"><span class="etq">Evaluado</span><span class="val" data-out="evaluado"></span></div>' +
-          '<div class="metrica"><span class="etq">Falta</span><span class="val" data-out="falta"></span></div>' +
+          '<div class="metrica"><span class="etq">Acumulada</span><span class="val nota-color" data-out="acumulada"></span></div>' +
           '<div class="metrica destacada" data-out="caja"><span class="etq" data-out="caja-etq">Necesitas</span><span class="val" data-out="necesaria"></span></div>' +
         '</div>' +
-        '<div class="mensajes"><p class="mensaje" data-out="mensaje"></p><p class="mensaje sec" data-out="aprobar"></p></div>' +
+        '<div class="mensajes"><p class="mensaje" data-out="mensaje"></p></div>' +
         '<div class="simulador">' +
           '<label for="sim-' + m.id + '">Si saco</label>' +
           '<input class="campo centro" id="sim-' + m.id + '" data-campo="simulacion" value="' + esc(m.simulacion) + '" inputmode="decimal" placeholder="0.00" autocomplete="off">' +
@@ -748,8 +876,6 @@
     var errores = [];
     if (!marcar(art.querySelector('[data-campo="creditos"]'), valido('creditos', m.creditos)))
       errores.push('Los créditos deben ser un número entre 0 y 40.');
-    if (!marcar(art.querySelector('[data-campo="meta"]'), valido('meta', m.meta)))
-      errores.push('La meta debe estar entre 0.00 y 5.00 (mientras tanto se usa 3.00).');
     m.evaluaciones.forEach(function (e, i) {
       var fila = art.querySelector('[data-ev="' + e.id + '"]');
       if (!fila) return;
@@ -763,71 +889,59 @@
     ul.hidden = errores.length === 0;
     ul.innerHTML = errores.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
 
-    // Total de porcentajes: en rojo mientras no sume 100 %
+    // Si los porcentajes no suman 100 %, el encabezado "%" se pone en rojo
     var hayPct = c.porcentajeTotal > 0;
-    var noCuadra = hayPct && !c.sumaCorrecta;
-    o('total').hidden = m.evaluaciones.length === 0;
-    o('total-pct').textContent = pct(c.porcentajeTotal);
-    o('total-pct').classList.toggle('no-cuadra', noCuadra);
-    var falta = o('total-falta');
-    falta.className = 'tot-falta no-cuadra';
-    falta.textContent = !noCuadra ? '' : (c.porcentajeTotal < 100
-      ? '· faltan ' + pct(100 - c.porcentajeTotal)
-      : '· sobran ' + pct(c.porcentajeTotal - 100));
+    var cabPct = o('cab-pct');
+    cabPct.classList.toggle('no-cuadra', hayPct && !c.sumaCorrecta);
+    cabPct.title = hayPct && !c.sumaCorrecta ? 'Los porcentajes suman ' + pct(c.porcentajeTotal) + ', no 100%' : '';
 
     // Métricas
-    o('acumulada').textContent = fmt(c.acumulada);
-    o('evaluado').textContent = pct(c.porcentajeEvaluado);
-    o('falta').textContent = pct(c.porcentajeRestante);
-    o('falta').classList.toggle('no-cuadra', noCuadra);
+    var evaluadoBarra = Math.min(100, c.porcentajeEvaluado);
+    o('evaluado').textContent = num(c.porcentajeEvaluado) + '/100% evaluado';
+    o('barra').style.width = evaluadoBarra + '%';
+    o('progreso').setAttribute('aria-valuenow', String(N.redondear(evaluadoBarra, 2)));
+    poner(o('acumulada'), fmt(c.acumulada));
+    o('acumulada').dataset.nivel = nivelNota(c.acumulada, c.porcentajeEvaluado > 0);
 
     var nivel = hayPct ? nivelDe(c) : '';
     art.dataset.nivel = nivel;
     var caja = o('caja'), val = o('necesaria'), chip = o('chip');
-    var msg = '', msgAprobar = '', chipTxt = '';
+    var msg = '', chipTxt = '';
     val.classList.remove('texto');
 
+    // Insignia de estado: Aprobando · En riesgo · Asegurada · Ya no se alcanza (o Aprobada/Reprobada al cerrar)
     if (!hayPct) {
       o('caja-etq').textContent = 'Necesitas';
-      val.textContent = '—';
+      poner(val, '—');
       msg = 'Agrega tus evaluaciones con su porcentaje para empezar.';
-      chipTxt = 'Sin evaluaciones';
+      chipTxt = 'Sin notas';
     } else if (c.completa) {
       o('caja-etq').textContent = 'Nota final';
-      val.textContent = fmt(c.acumulada);
+      poner(val, fmt(c.acumulada));
       var ap = N.aprueba(c.acumulada);
-      msg = 'Materia cerrada con <b>' + fmt(c.acumulada) + '</b>: ' + (ap ? 'aprobada' : 'reprobada') +
-        (c.estado === 'meta-cumplida' ? ' y meta de ' + metaTxt + ' cumplida.' : '. La meta de ' + metaTxt + ' no se alcanzó.');
-      chipTxt = 'Final ' + fmt(c.acumulada);
+      msg = 'Materia cerrada con <b>' + fmt(c.acumulada) + '</b>: ' + (ap ? 'aprobada.' : 'reprobada.');
+      chipTxt = ap ? 'Aprobada' : 'Reprobada';
     } else {
       o('caja-etq').textContent = 'Necesitas';
       if (c.estado === 'asegurada') {
-        val.textContent = 'Asegurada';
+        poner(val, 'Asegurada');
         val.classList.add('texto');
-        msg = 'Tu meta de ' + metaTxt + ' ya está asegurada: aun sacando 0.00 en lo que falta, cierras con <b>' + fmt(c.acumulada) + '</b>.';
-        chipTxt = 'Meta asegurada';
+        msg = 'Ya tienes asegurado el ' + metaTxt + ': aun sacando 0.00 en lo que falta, cierras con <b>' + fmt(c.acumulada) + '</b>.';
+        chipTxt = 'Asegurada';
       } else if (c.estado === 'inalcanzable') {
-        val.textContent = fmt(c.necesaria);
-        msg = 'La meta de ' + metaTxt + ' ya no se alcanza. La nota máxima posible es <b>' + fmt(c.notaMaxima) + '</b> (sacando 5.00 en todo lo que falta).';
-        chipTxt = 'Meta inalcanzable';
+        poner(val, fmt(c.necesaria));
+        msg = 'Ya no alcanzas el ' + metaTxt + '. La nota máxima posible es <b>' + fmt(c.notaMaxima) + '</b> (sacando 5.00 en todo lo que falta).';
+        chipTxt = 'Ya no se alcanza';
       } else {
-        val.textContent = fmt(c.necesaria);
-        msg = 'Necesitas <b>' + fmt(c.necesaria) + '</b> en el ' + pct(c.porcentajeRestante) + ' que falta para cerrar con ' + metaTxt + '.';
-        chipTxt = 'Necesitas ' + fmt(c.necesaria);
-      }
-      if (N.redondear(c.meta, 2) !== N.APROBACION) {
-        var nAp = N.notaNecesaria(c.acumulada, c.porcentajeRestante, N.APROBACION);
-        if (nAp <= 0) msgAprobar = 'Ya tienes asegurado aprobar (' + APROB_TXT + ').';
-        else if (N.redondear(nAp, 2) > N.NOTA_MAX) msgAprobar = 'Ya no alcanza para aprobar (mínimo ' + APROB_TXT + ').';
-        else msgAprobar = 'Para aprobar (' + APROB_TXT + ') necesitas ' + fmt(nAp) + ' en lo que falta.';
+        poner(val, fmt(c.necesaria));
+        msg = 'Necesitas <b>' + fmt(c.necesaria) + '</b> en el ' + pct(c.porcentajeRestante) + ' que falta para llegar a ' + metaTxt + '.';
+        chipTxt = nivel === 'verde' ? 'Aprobando' : 'En riesgo';
       }
     }
     caja.dataset.nivel = nivel;
     chip.dataset.nivel = nivel;
     chip.textContent = chipTxt;
     o('mensaje').innerHTML = msg;
-    o('aprobar').textContent = msgAprobar;
-    o('aprobar').hidden = !msgAprobar;
 
     // Simulador
     var simInput = art.querySelector('[data-campo="simulacion"]');
@@ -854,13 +968,11 @@
       } else {
         var final = N.notaFinalSimulada(c.acumulada, c.porcentajeRestante, x);
         var nivelSim = N.colorNotaFinal(final);
-        var cumple = N.redondear(final, 2) >= c.meta;
-        simRes.textContent = fmt(final);
+        poner(simRes, fmt(final));
         simRes.dataset.nivel = nivelSim;
         simChip.hidden = false;
         simChip.dataset.nivel = nivelSim;
-        simChip.textContent = !N.aprueba(final) ? 'Reprobarías'
-          : (nivelSim === 'amarillo' ? 'Apruebas por poco' : 'Apruebas') + (cumple ? ' y cumples la meta' : ', sin llegar a la meta');
+        simChip.textContent = !N.aprueba(final) ? 'Reprobarías' : (nivelSim === 'amarillo' ? 'Apruebas por poco' : 'Apruebas');
       }
     }
   }
@@ -869,15 +981,14 @@
   function renderResumen() {
     var ms = datos.materias;
     $('#resumen').hidden = ms.length === 0;
-    if (!ms.length) return;
+    if (!ms.length) { $('#prom-actual').textContent = '—'; return; }
     var r = N.resumenSemestre(ms.map(function (m) {
       return { nombre: m.nombre, creditos: N.parsearNumero(m.creditos), calculo: calculoDe(m) };
     }));
-    var pa = r.promedioActual === null ? '—' : fmt(r.promedioActual);
-    var pp = r.promedioProyectado === null ? '—' : fmt(r.promedioProyectado);
-    $('#prom-actual').textContent = pa;
-    $('#prom-actual-sub').textContent = r.creditosConNota ? 'Sobre ' + num(r.creditosConNota) + ' créditos con notas' : 'Aún no hay notas';
-    $('#prom-proy').textContent = pp;
+    var prom = r.promedio === null ? '—' : fmt(r.promedio);
+    var nivelProm = r.promedio === null ? '' : nivelNota(r.promedio, r.filas.some(function (f) { return f.porcentajeEvaluado > 0; }));
+    poner($('#prom-actual'), prom); // en el encabezado, en blanco
+    $('#prom-actual').dataset.nivel = nivelProm;
 
     // Créditos inscritos del semestre vs. créditos de las materias
     var nMat = ms.length + (ms.length === 1 ? ' materia' : ' materias');
@@ -895,21 +1006,16 @@
       : vc.estado === 'ok' ? nMat + ' · completos' : nMat;
 
     $('#resumen-filas').innerHTML = r.filas.map(function (f) {
-      var estado = f.completa ? 'Final' : (f.porcentajeEvaluado > 0 ? 'En curso · ' + pct(f.porcentajeEvaluado) + ' evaluado' : 'Sin notas');
-      var actual = f.actual === null ? '—' : fmt(f.actual);
-      var nivelA = f.actual === null ? '' : N.colorNotaFinal(f.actual);
+      var estado = f.completa ? 'Final' : (f.porcentajeEvaluado > 0 ? num(f.porcentajeEvaluado) + '/100% evaluado' : 'Sin notas');
       return '<tr>' +
         '<td class="t-nombre">' + esc(f.nombre || 'Materia') + '<span class="t-sub">' + estado + '</span></td>' +
         '<td class="num">' + (f.creditos === null ? '—' : num(f.creditos)) + '</td>' +
-        '<td class="num nota-color" data-nivel="' + nivelA + '">' + actual + '</td>' +
-        '<td class="num nota-color" data-nivel="' + N.colorNotaFinal(f.proyectada) + '">' + fmt(f.proyectada) + '</td>' +
+        '<td class="num nota-color" data-nivel="' + nivelNota(f.actual, f.porcentajeEvaluado > 0) + '">' + fmt(f.actual) + '</td>' +
       '</tr>';
     }).join('');
     $('#pie-creditos').textContent = num(r.creditosTotales);
-    $('#pie-actual').textContent = pa;
-    $('#pie-actual').dataset.nivel = r.promedioActual === null ? '' : N.colorNotaFinal(r.promedioActual);
-    $('#pie-proy').textContent = pp;
-    $('#pie-proy').dataset.nivel = r.promedioProyectado === null ? '' : N.colorNotaFinal(r.promedioProyectado);
+    $('#pie-actual').textContent = prom;
+    $('#pie-actual').dataset.nivel = nivelProm;
   }
 
   /* ---------- Render general ---------- */
@@ -950,14 +1056,14 @@
 
   $('#btn-agregar').addEventListener('click', function () {
     agregarMateria({
-      id: uid(), nombre: 'Materia ' + (datos.materias.length + 1), creditos: '3', meta: '3.00',
+      id: uid(), nombre: 'Materia ' + (datos.materias.length + 1), creditos: '3',
       simulacion: '', abierta: true, evaluaciones: [nuevaEval('Parcial 1')]
     }, true);
   });
 
   $('#btn-ejemplo').addEventListener('click', function () {
     agregarMateria({
-      id: uid(), nombre: 'Cálculo II', creditos: '4', meta: '3.00', simulacion: '3.5', abierta: true,
+      id: uid(), nombre: 'Cálculo II', creditos: '4', simulacion: '3.5', abierta: true,
       evaluaciones: [
         { id: uid(), nombre: 'Parcial 1', porcentaje: '30', nota: '3,5' },
         { id: uid(), nombre: 'Parcial 2', porcentaje: '30', nota: '2.8' },
@@ -1159,7 +1265,18 @@
     dlg.showModal();
   };
 
-  $('#btn-entrar').addEventListener('click', function () { if (App.onEntrar) App.onEntrar(); });
+  // Panel de inicio de sesión. "Continuar con Google" llama a onEntrar dentro del mismo toque,
+  // para que el navegador (sobre todo en iPhone) permita abrir la ventana de Google.
+  var dlgLogin = $('#dlg-login');
+  $('#btn-entrar').addEventListener('click', function () { dlgLogin.showModal(); });
+  $('#login-google').addEventListener('click', function () {
+    dlgLogin.close();
+    if (App.onEntrar) App.onEntrar();
+  });
+  $('#login-cerrar').addEventListener('click', function () { dlgLogin.close(); });
+  dlgLogin.addEventListener('click', function (ev) { if (ev.target === dlgLogin) dlgLogin.close(); }); // clic fuera
+
+  $('#btn-agregar-vacio').addEventListener('click', function () { $('#btn-agregar').click(); });
   $('#btn-salir').addEventListener('click', function () { if (App.onSalir) App.onSalir(); });
 
   renderTodo();

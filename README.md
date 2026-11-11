@@ -6,16 +6,16 @@ Calculadora de notas universitarias en escala 0.00 – 5.00 (se aprueba con 2.95
 
 ## Qué hace
 
-- Materias con créditos y una meta propia (3.00 por defecto).
+- Materias con sus créditos.
 - Evaluaciones con porcentaje y nota; la nota puede quedar vacía si aún no la tienes.
-- Nota acumulada, porcentaje evaluado y lo que necesitas en lo que falta para llegar a tu meta.
+- Nota acumulada (lo obtenido hasta ahora), porcentaje evaluado y lo que necesitas en lo que falta para llegar a 2.96.
 - Simulador: "si saco X en lo que falta, ¿con cuánto cierro?".
-- Resumen del semestre con promedio actual y proyectado, ponderado por créditos, y control de créditos inscritos.
+- Resumen del semestre con el promedio ponderado por créditos y control de créditos inscritos.
 - Sincronización entre dispositivos con tu cuenta de Google.
 
 ## Cómo se usa
 
-1. Toca **+ Agregar materia** y ponle nombre, créditos y meta.
+1. Toca **+ Agregar materia** y ponle nombre y créditos.
 2. Agrega sus evaluaciones con porcentaje y nota (sirve punto o coma: `3,5` o `3.5`).
 3. Mira cuánto necesitas en lo que falta; todo se calcula mientras escribes.
 4. Opcional: toca **Sincronizar** para ver tus datos en el celular y el PC.
